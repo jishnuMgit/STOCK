@@ -7,7 +7,9 @@ import Select, {
 } from "react-select";
 import { useCoa } from "../../../hooks/useCoa";
 import Header from "../../../components/common/Header";
+import ActionButton from "../../../components/common/ActionButton";
 import { useMessageModal } from "../../../hooks/useMessageModal";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 
 // ============================================================
 // TYPES
@@ -477,6 +479,16 @@ const COAPage: React.FC<COAPageProps> = ({
       setBusy(false);
     }
   };
+
+  useCtrlShortcuts({
+    s: () => {
+      if (!disabledAll && !isDelete) void handleSave();
+    },
+    d: () => {
+      if (!disabledAll && isDelete) void handleDelete();
+    },
+  });
+
   // ============================================================
   // COMMON STYLES
   // ============================================================
@@ -740,48 +752,33 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* BUTTONS */}
-            <div className="mt-2.5 flex justify-center gap-2.75">
+            <div className="mt-2.5 flex justify-center gap-2.75 -mb-3">
               {/* SAVE / MODIFY (disabled in Delete mode) */}
-              <button
+              <ActionButton
                 id="btnSave"
-                type="button"
+                label={isAdd ? "Save" : "Modify"}
+                underlineIndex={0}
                 onClick={handleSave}
                 disabled={disabledAll || isDelete}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isAdd ? (
-                  <>
-                    <span className="underline">S</span>
-                    ave
-                  </>
-                ) : (
-                  "Modify"
-                )}
-              </button>
+              />
 
               {/* DELETE (only enabled in Delete mode) */}
-              <button
+              <ActionButton
                 id="btnDelete"
-                type="button"
+                label="Delete"
+                underlineIndex={0}
                 onClick={handleDelete}
                 disabled={disabledAll || !isDelete}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="underline">D</span>
-                elete
-              </button>
+              />
 
               {/* CLEAR (Add mode only) */}
-              <button
+              <ActionButton
                 id="btnClear"
-                type="button"
+                label="Clear"
+                // underlineIndex={0}
                 onClick={handleClear}
                 disabled={disabledAll || !isAdd}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="underline">C</span>
-                lear
-              </button>
+              />
             </div>
           </div>
         )}

@@ -1775,17 +1775,19 @@ const PaymentPage: React.FC = () => {
         {/* ACTIONS
             TODO: Print is a placeholder until /Payment/print exists. */}
 
-        <PaymentActions
-          ref={actionsRef}
-          clearForm={clearForm}
-          onPrint={handlePrint}
-          onPost={() => void handlePost()}
-          onSave={isModifyMode ? handleModify : handleSave}
-          onDelete={handledelete}
-          saveLabel={isModifyMode ? "Modify" : "Save"}
-          isPosted={isPosted}
-          preventSearchNavigation
-        />
+        <div className="-mb-3">
+          <PaymentActions
+            ref={actionsRef}
+            clearForm={clearForm}
+            onPrint={handlePrint}
+            onPost={() => void handlePost()}
+            onSave={isModifyMode ? handleModify : handleSave}
+            onDelete={handledelete}
+            saveLabel={isModifyMode ? "Modify" : "Save"}
+            isPosted={isPosted}
+            preventSearchNavigation
+          />
+        </div>
       </div>
 
       {/* TODO: Payment print preview goes here once the backend exists. */}

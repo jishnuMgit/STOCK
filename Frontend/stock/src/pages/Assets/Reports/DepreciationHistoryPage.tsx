@@ -718,22 +718,17 @@ const DepreciationHistory: React.FC = () => {
             {/* BUTTONS */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[150px_minmax(0,1fr)] gap-x-4">
+            {/* the Print button: exactly as main has it (the Asset reports' padding fix) */}
+            <div />
 
-              <div />
+            <div className="w-full flex items-center  justify-center gap-1 ">
 
-              <div className="flex items-center gap-1">
-
-                <ActionButton
-                  onClick={handlePrint}
-                  className="h-9 w-20"
-                >
-                  <u>P</u>rint
-                </ActionButton>
-
-                
-
-              </div>
+              <ActionButton
+                onClick={handlePrint}
+                className="h-9 w-20"
+              >
+                <u>P</u>rint
+              </ActionButton>
 
             </div>
 

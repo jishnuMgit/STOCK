@@ -368,7 +368,7 @@ const SetDefaultBranchPage: React.FC = () => {
             FORM
         ==================================================== */}
 
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3">
           {/* TABLE AREA */}
 
           <div className="h-[446px] overflow-hidden border border-[#bfe8d0]">

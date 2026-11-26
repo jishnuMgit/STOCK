@@ -115,7 +115,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
           <Header Name="Finance Year Close" />
 
           {/* Form */}
-          <section className="px-4 pb-5 pt-5 sm:px-6">
+          <section className="px-3 pb-3 pt-3 sm:px-3">
             {/* the two rows are on their own, so the Year Close Type panel (taller than both) cannot stretch the space between them */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="grid grid-cols-1 items-start gap-x-2 gap-y-3.5 sm:grid-cols-[100px_250px]">

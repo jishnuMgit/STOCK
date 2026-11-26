@@ -174,7 +174,7 @@ const SetReceivableAgeingPeriod: React.FC<SetReceivableAgeingPeriodProps> = ({
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <Header Name="Set Receivable Ageing Period" />
 
-          <section className="px-3.5 pb-6 pt-3">
+          <section className="px-3.5 pb-3 pt-3">
             {/* Filters */}
             <div className="grid grid-cols-[100px_1fr] items-center gap-x-4 gap-y-3">
               <FieldLabel>Module :</FieldLabel>

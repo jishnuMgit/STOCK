@@ -638,7 +638,10 @@ const AssetSchedulePage: React.FC = () => {
 
               </RadioPanel>
 
-              <div className="flex items-end gap-1 pt-8.5 -mt-1.5">
+             
+
+            </div>
+             <div className="flex w-full items-center justify-center gap-1  -mt-1.5">
 
                 <ActionButton
                   onClick={handlePrint}
@@ -650,8 +653,6 @@ const AssetSchedulePage: React.FC = () => {
               
 
               </div>
-
-            </div>
 
           </div>
 

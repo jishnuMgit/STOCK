@@ -60,7 +60,7 @@ type CurrencyPageProps = {
 
 const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
 
-console.log(onClose)
+  console.log(onClose)
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
@@ -484,7 +484,7 @@ console.log(onClose)
       }
 
       notify.success("Currency saved successfully");
-       handleClear();
+      handleClear();
       reload();
     } catch {
       notify.error("Not saved, try again");
@@ -594,189 +594,190 @@ console.log(onClose)
 
   return (
     <>
-    <div
-      onKeyDown={handlePageKeyDown}
-      className="flex min-h-screen w-full items-center justify-center bg-white"
-    >
-      <div className="w-full max-w-100 border border-slate-400 bg-white shadow-sm">
-        {/* TITLE */}
-        <Header Name="Currency" />
+      <div
+        onKeyDown={handlePageKeyDown}
+        className="flex min-h-screen w-full items-center justify-center bg-white"
+      >
+        <div className="w-full max-w-100 border border-slate-400 bg-white shadow-sm">
+          {/* TITLE */}
+          <Header Name="Currency" />
 
-        {/* FORM */}
-        <div className="p-3 m-3">
-          <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
-            <div className="h-full overflow-y-auto overflow-x-hidden">
-              <table className="w-full table-fixed border-collapse text-[12px]">
-                <colgroup>
-                  <col className="w-6" />
-                  <col />
-                </colgroup>
+          {/* FORM */}
+          <div className="p-3 m-3">
+            <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
+              <div className="h-full overflow-y-auto overflow-x-hidden">
+                <table className="w-full table-fixed border-collapse text-[12px]">
+                  <colgroup>
+                    <col className="w-6" />
+                    <col />
+                  </colgroup>
 
-                <thead>
-                  <tr>
-                    <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
-                    <th className={`${headerCellClass} text-left !pl-[2px]`}>Currency</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {displayRows.map((row, index) => (
-                    <tr
-                      key={index}
-                      className={`h-8.5 ${
-                        selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                      }`}
-                      onClick={() => setSelectedRow(index)}
-                    >
-                      {/* SELECTOR COLUMN: the arrow of the selected row */}
-                      <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
-                        {selectedRow === index && (
-                          <span className="text-[9px] text-[#222]">▶</span>
-                        )}
-                      </td>
-
-                      {/* CURRENCY (max 3, capital letters) */}
-                      <td className={`h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
-                        <div className="flex h-8 items-center">
-                          <input
-                            id={`txtCurrency-${index}`}
-                            name="txtCurrency"
-                            type="text"
-                            value={row.txtCurrency}
-                            maxLength={3}
-                            autoComplete="off"
-                            onFocus={(event) => {
-                              selectOnFocus(event);
-                              setSelectedRow(index);
-
-                              // find out early whether transactions use it
-                              if (row.txtOriginalCurrency !== null) {
-                                isUsed(row.txtOriginalCurrency);
-                              }
-                            }}
-                            onBlur={() => handleBlur(index)}
-                            onChange={(event) =>
-                              updateRow(index, {
-                                txtCurrency: event.target.value.toUpperCase(),
-                              })
-                            }
-                            onPaste={(event) => {
-                              if (isEditBlocked(index)) {
-                                event.preventDefault();
-                              }
-                            }}
-                            onKeyDown={(event) => handleCellKeyDown(event, index)}
-                            className={cellInputClass}
-                          />
-
-                          {/* the X of the row, at the right end of the box (the slot is
-                              always there so the box does not change size) */}
-                          <span className="flex w-8 shrink-0 items-center justify-center">
-                            {selectedRow === index && rows[index] && (
-                              <button
-                                type="button"
-                                tabIndex={-1}
-                                title="Delete row (Ctrl+Delete)"
-                                onClick={() => deleteRow(index)}
-                                className="inline-flex items-center justify-center text-slate-400 hover:text-red-500"
-                              >
-                                <X size={12} />
-                              </button>
-                            )}
-                          </span>
-                        </div>
-                      </td>
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                      <th className={`${headerCellClass} text-left !pl-[2px]`}>Currency</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {displayRows.map((row, index) => (
+                      <tr
+                        key={index}
+                        className={`h-8.5 ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                          }`}
+                        onClick={() => setSelectedRow(index)}
+                      >
+                        {/* SELECTOR COLUMN: the arrow of the selected row */}
+                        <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                          {selectedRow === index && (
+                            <span className="text-[9px] text-[#222]">▶</span>
+                          )}
+                        </td>
+
+                        {/* CURRENCY (max 3, capital letters) */}
+                        <td className={`h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
+                          <div className="flex h-8 items-center">
+                            <input
+                              id={`txtCurrency-${index}`}
+                              name="txtCurrency"
+                              type="text"
+                              value={row.txtCurrency}
+                              maxLength={3}
+                              autoComplete="off"
+                              onFocus={(event) => {
+                                selectOnFocus(event);
+                                setSelectedRow(index);
+
+                                // find out early whether transactions use it
+                                if (row.txtOriginalCurrency !== null) {
+                                  isUsed(row.txtOriginalCurrency);
+                                }
+                              }}
+                              onBlur={() => handleBlur(index)}
+                              onChange={(event) =>
+                                updateRow(index, {
+                                  txtCurrency: event.target.value.toUpperCase(),
+                                })
+                              }
+                              onPaste={(event) => {
+                                if (isEditBlocked(index)) {
+                                  event.preventDefault();
+                                }
+                              }}
+                              onKeyDown={(event) => handleCellKeyDown(event, index)}
+                              className={cellInputClass}
+                            />
+
+                            {/* the X of the row, at the right end of the box (the slot is
+                              always there so the box does not change size) */}
+                            <span className="flex w-8 shrink-0 items-center justify-center">
+                              {selectedRow === index && rows[index] && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row (Ctrl+Delete)"
+                                  onClick={() => deleteRow(index)}
+                                  className="inline-flex items-center justify-center text-slate-400 hover:text-red-500"
+                                >
+                                  <X size={12} />
+                                </button>
+                              )}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* BUTTONS */}
+            <div className="-mb-3">
+              <TransactionActions
+                className="mt-3.5 flex justify-center gap-3"
+                actions={[
+                  {
+                    id: "btnSave",
+                    label: actionWord,
+                    underlineIndex: 0,
+                    onClick: handleSave,
+                    disabled: !canSaveOrModify || saving,
+                  },
+                  { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: openFind },
+                  { id: "btnClear", label: "Clear", onClick: handleClear },
+                ]}
+              />
             </div>
           </div>
-
-          {/* BUTTONS */}
-          <TransactionActions
-            className="mt-3.5 flex justify-center gap-3"
-            actions={[
-              {
-                id: "btnSave",
-                label: actionWord,
-                underlineIndex: 0,
-                onClick: handleSave,
-                disabled: !canSaveOrModify || saving,
-              },
-              { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: openFind },
-              { id: "btnClear", label: "Clear", onClick: handleClear },
-            ]}
-          />
         </div>
-      </div>
 
-      {/* FIND BOX */}
-      {findOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-30"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closeFind();
-          }}
-          onKeyDown={(event) => {
-            // keep Enter / Escape inside the box (not the page's Enter-as-Tab)
-            event.stopPropagation();
-            if (event.key === "Escape") {
-              event.preventDefault();
-              closeFind();
-            }
-          }}
-        >
-          <div className="w-75 border border-slate-400 bg-white shadow-lg">
-            <div className="flex h-7 items-center bg-[#a7dfc0] px-2 text-[15px] font-semibold text-[#374151]">
-              Find Currency
-            </div>
+        {/* FIND BOX */}
+        {findOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-30"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closeFind();
+            }}
+            onKeyDown={(event) => {
+              // keep Enter / Escape inside the box (not the page's Enter-as-Tab)
+              event.stopPropagation();
+              if (event.key === "Escape") {
+                event.preventDefault();
+                closeFind();
+              }
+            }}
+          >
+            <div className="w-75 border border-slate-400 bg-white shadow-lg">
+              <div className="flex h-7 items-center bg-[#a7dfc0] px-2 text-[15px] font-semibold text-[#374151]">
+                Find Currency
+              </div>
 
-            <div className="p-2.5">
-              <input
-                autoFocus
-                type="text"
-                value={findText}
-                placeholder="Type a currency"
-                autoComplete="off"
-                onChange={(event) => setFindText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    if (findMatches[0]) pickFound(findMatches[0].index);
-                  }
-                }}
-                className="input-style w-full"
-              />
+              <div className="p-2.5">
+                <input
+                  autoFocus
+                  type="text"
+                  value={findText}
+                  placeholder="Type a currency"
+                  autoComplete="off"
+                  onChange={(event) => setFindText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (findMatches[0]) pickFound(findMatches[0].index);
+                    }
+                  }}
+                  className="input-style w-full"
+                />
 
-              <div className="mt-2 max-h-55 overflow-y-auto border border-[#bfe8d0]">
-                {findMatches.length === 0 ? (
-                  <div className="px-2.5 py-2 text-[12px] text-gray-500">
-                    No matching currency
-                  </div>
-                ) : (
-                  findMatches.map(({ row, index }) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => pickFound(index)}
-                      className="block w-full px-2.5 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
-                    >
-                      {row.txtCurrency}
-                    </button>
-                  ))
-                )}
+                <div className="mt-2 max-h-55 overflow-y-auto border border-[#bfe8d0]">
+                  {findMatches.length === 0 ? (
+                    <div className="px-2.5 py-2 text-[12px] text-gray-500">
+                      No matching currency
+                    </div>
+                  ) : (
+                    findMatches.map(({ row, index }) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => pickFound(index)}
+                        className="block w-full px-2.5 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
+                      >
+                        {row.txtCurrency}
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
 
-    {/* the "Do you want to delete ?" question - outside the root div: the page's
+      {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
-    {dialog}
-    {messageDialog}
+      {dialog}
+      {messageDialog}
     </>
   );
 };
