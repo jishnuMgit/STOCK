@@ -25,7 +25,7 @@ import {
   buildHtml,
   printStockTransferReport,
   type PrintReport,
-} from "../../../../components/Transaction/StockTransfer/StockTransferPrintReport";
+} from "../../../../components/Transaction/StockTransfer/RptStockTransferPrint";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";
@@ -341,6 +341,7 @@ const selectStyles = {
 // TABLE SELECT STYLES
 // ============================================================
 
+// the values in the grid boxes are 11 px, like the rest of the grid (the open lists stay 12 px)
 const tableSelectStyles: StylesConfig<SelectOption, false> = {
   ...selectStyles,
   //@ts-ignore
@@ -353,7 +354,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     boxShadow: "none",
     outline: "none",
     backgroundColor: "transparent",
-    fontSize: "12px",
+    fontSize: "11px",
     cursor: "pointer",
 
     "&:hover": {
@@ -370,14 +371,14 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#374151",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#94a3b8",
   }),
 
@@ -385,7 +386,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "12px",
+    fontSize: "11px",
   }),
 
   indicatorsContainer: (base) => ({
@@ -1998,7 +1999,7 @@ const StockTransferPage: React.FC = () => {
                 </colgroup>
 
                 <thead className="sticky top-0 z-10 bg-[#edf9f2]">
-                  <tr className="h-7 text-left text-[12px] text-[#344054]">
+                  <tr className="h-7 text-left text-[11px] text-[#344054]">
                     <th className="border border-[#bfe8d0] px-1 font-medium"></th>
                     <th className="border border-[#bfe8d0] px-1 text-center font-medium">Line</th>
                     <th className="border border-[#bfe8d0] px-2 font-medium">Item ID</th>
@@ -2021,7 +2022,7 @@ const StockTransferPage: React.FC = () => {
                       }}
                       // the highlighted row follows the cursor (any box of the row), as on the Receipt screen
                       onFocus={() => setActiveRow(index)}
-                      className={`h-7 text-[12px] ${activeRow === index ? "bg-[#f9fffc]" : "bg-white"
+                      className={`h-7 text-[11px] ${activeRow === index ? "bg-[#f9fffc]" : "bg-white"
                         }`}
                     >
                       {/* ROW SELECTOR */}

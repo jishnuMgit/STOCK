@@ -507,8 +507,12 @@ const DepreciationHistory: React.FC = () => {
                     firstHeader="Cost Center ID"
                     secondHeader="Cost Center Name"
                     firstWidth={190}
-                    secondWidth={450}
+                    // 290 px: the Name list (Name | ID) is 190 px wider than its box, and must end inside the window
+                    secondWidth={290}
                     gap={5}
+                    listLook="receipt"
+                    // the ID column of the Name list starts where the Name box ends
+                    nameDividerAtBoxEnd
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -587,8 +591,12 @@ const DepreciationHistory: React.FC = () => {
                     firstHeader="Item ID"
                     secondHeader="Item Name"
                     firstWidth={190}
-                    secondWidth={450}
+                    // 290 px: the Name list (Name | ID) is 190 px wider than its box, and must end inside the window
+                    secondWidth={290}
                     gap={5}
+                    listLook="receipt"
+                    // the ID column of the Name list starts where the Name box ends
+                    nameDividerAtBoxEnd
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -671,9 +679,10 @@ const DepreciationHistory: React.FC = () => {
             {/* PERIOD */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[125px_minmax(0,1fr)] items-center gap-x-4">
+            {/* the same 150 px label column as the rows above, so the dates start where the boxes of the other rows do */}
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
 
-              <div className="flex h-7.5 w-28.25 items-center border border-gray-300 bg-[#FAFBFC] px-1.75">
+              <div className="flex h-7.5 w-38 items-center border border-gray-300 bg-[#FAFBFC] px-1.75">
 
                 <span className="text-[14px] text-[#172b43]">
                   Period :
@@ -683,7 +692,7 @@ const DepreciationHistory: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-1.25">
 
-                <div className="w-36.5">
+                <div className="w-38.5">
                   <AppDatePicker
                     id="dtpFromDate"
                     label="Period start date"
@@ -692,7 +701,7 @@ const DepreciationHistory: React.FC = () => {
                   />
                 </div>
 
-                <div className="w-36.5">
+                <div className="w-38.5">
                   <AppDatePicker
                     id="dtpToDate"
                     label="Period end date"
@@ -709,24 +718,19 @@ const DepreciationHistory: React.FC = () => {
             {/* BUTTONS */}
             {/* -------------------------------------- */}
 
-          
+            {/* the Print button: exactly as main has it (the Asset reports' padding fix) */}
+            <div />
 
-              <div />
+            <div className="w-full flex items-center  justify-center gap-1 ">
 
-              <div className="w-full flex items-center  justify-center gap-1 ">
+              <ActionButton
+                onClick={handlePrint}
+                className="h-9 w-20"
+              >
+                <u>P</u>rint
+              </ActionButton>
 
-                <ActionButton
-                  onClick={handlePrint}
-                  className="h-9 w-20"
-                >
-                  <u>P</u>rint
-                </ActionButton>
-
-                
-
-              </div>
-
-          
+            </div>
 
           </div>
 

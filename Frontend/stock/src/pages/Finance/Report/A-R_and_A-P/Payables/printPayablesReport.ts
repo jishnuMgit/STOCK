@@ -71,13 +71,13 @@ export const buildHtml = (r: PrintReport) => {
   .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
   .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight}px; }
   .br   { font-size: ${size.group}pt; text-align: left; height: ${html.subHeight + html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
        padding: 0 ${html.cellPaddingX}px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${html.cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${html.cellPaddingX}px;
        overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   td.r { text-align: right; }
-  tr.tot td { font-weight: bold; border-top: 1px solid ${lineColor}; }
+  tr.tot td { font-weight: bold; border-top: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; }
 </style>
 </head>
 <body>

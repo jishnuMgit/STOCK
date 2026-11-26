@@ -88,6 +88,7 @@ export const beginningStockPrintHeaderKeys: KeyMap = {
   fbrname: "txtBranchName",
   fdate: "dtpDate",
   fdocno: "txtDocNo",
+  fsavedby: "txtSavedBy",
 };
 
 export const beginningStockPrintLineKeys: KeyMap = {
@@ -181,6 +182,7 @@ export const stockTransferPrintHeaderKeys: KeyMap = {
   fdocno: "txtDocNo",
   fdate: "dtpDate",
   fnote: "txtNote",
+  fsavedby: "txtSavedBy",
 };
 
 export const stockTransferPrintLineKeys: KeyMap = {
@@ -227,6 +229,7 @@ export const stockAdjustmentPrintHeaderKeys: KeyMap = {
   fdocno: "txtDocNo",
   fdate: "dtpDate",
   fnote: "txtNote",
+  fsavedby: "txtSavedBy",
 };
 
 export const stockAdjustmentPrintLineKeys: KeyMap = {

@@ -424,7 +424,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
         />
       </div>
     </Field>
-    <Field label="Purchase Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+    <Field label="Purchase Date :" labelClassName={LR} className="lg:col-span-6 lg:justify-self-end">
       <div className="w-35">
         <ReadOnlyBox id="txtPurchaseDate" value={asset?.purchaseDate ?? ""} />
       </div>
@@ -453,7 +453,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     <Field
       label="Depr. calc. upto date :"
       labelClassName={LR}
-      className="lg:col-span-6 lg:ml-35"
+      className="lg:col-span-6 lg:justify-self-end"
     >
       <div className="w-35">
         <ReadOnlyBox
@@ -479,7 +479,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     <Field
       label="Accumulated Depr. :"
       labelClassName={LR}
-      className="lg:col-span-6 lg:ml-35"
+      className="lg:col-span-6 lg:justify-self-end"
     >
       <div className="w-35">
         <ReadOnlyBox
@@ -509,7 +509,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
   set,
 }) => (
   <>
-    <Field label="Status :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+    <Field label="Status :" labelClassName={LR} className="lg:col-span-6 lg:justify-self-end">
       <Combo
         id="lkpStatus"
         options={statusOptions}
@@ -534,7 +534,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
         />
       </div>
     </Field>
-    <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+    <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6 lg:justify-self-end">
       <div className="w-35">
         <AppDatePicker
           id="dtpJvDate"
@@ -565,7 +565,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
         />
       </div>
     </Field>
-    <Field label="Disposal Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+    <Field label="Disposal Date :" labelClassName={LR} className="lg:col-span-6 lg:justify-self-end">
       <div className="w-35">
         <AppDatePicker
           id="dtpDisposalDate"

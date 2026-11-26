@@ -98,17 +98,17 @@ export const buildHtml = (r: PrintReport) => {
   .co   { font-size: ${size.company}pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
   .head { font-size: ${size.heading}pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
   .br   { font-size: ${size.group}pt; text-align: left; height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${lineColor}; height: ${REPORT_STYLE.html.rowHeight}px; font-size: ${size.columnHead}pt;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; height: ${REPORT_STYLE.html.rowHeight}px; font-size: ${size.columnHead}pt;
        padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
   th { vertical-align: bottom; }   /* spanning labels sit on the same line as Debit / Credit / Movement */
   th.r { text-align: right; }
   th.c { text-align: center; }
   th.m { vertical-align: middle; }          /* Account ID / Account Name: centred between the two lines */
-  td { border: 1px solid ${lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
        overflow: hidden; white-space: nowrap; }
   td.name { white-space: pre; }            /* keeps the A/C group indent */
   td.r { text-align: right; }
-  tr.tot td { font-weight: bold; border-top: 1px solid ${lineColor}; }
+  tr.tot td { font-weight: bold; border-top: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; }
 </style>
 </head>
 <body>
