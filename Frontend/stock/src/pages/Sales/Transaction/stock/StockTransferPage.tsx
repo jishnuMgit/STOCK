@@ -12,7 +12,6 @@ import { filterPairOption } from "../../../../components/PairSelect/pairSelectPa
 import { accountDropdownStyles } from "../../../../components/Transaction/Receipt/save/ReactSelectStyles";
 import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
-import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
@@ -1805,11 +1804,8 @@ const StockTransferPage: React.FC = () => {
   useCtrlShortcuts(
     preview
       ? { p: () => printStockTransferReport(preview.report) }
-      : { s: handleSave, d: handleDelete, p: handlePrint }
+      : { s: handleSave, d: handleDelete, p: handlePrint, o: handlePost }
   );
-
-  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
-  useAltShortcuts(preview ? {} : { t: handlePost });
 
   // ==========================================================
   // JSX
@@ -2324,7 +2320,7 @@ const StockTransferPage: React.FC = () => {
             </table>
           )}
 
-          {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+D, Ctrl+P, Ctrl+T) */}
+          {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+D, Ctrl+P, Ctrl+O) */}
           <div className="-mb-3">
             <TransactionActions
               actions={[
@@ -2352,7 +2348,7 @@ const StockTransferPage: React.FC = () => {
                 {
                   id: "btnPost",
                   label: "Post",
-                  underlineIndex: 3,
+                  underlineIndex: 1,
                   onClick: handlePost,
                   disabled: !chkSaved || chkPosted || !perms.post || saving,
                 },

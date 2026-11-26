@@ -28,7 +28,6 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 import { deleteSuccessMessage } from "../../../../hooks/useDeleteToast";
-import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 
 // ============================================================
@@ -597,11 +596,8 @@ const BeginningBalance: React.FC = () => {
   useCtrlShortcuts(
     preview
       ? { p: () => printBeginningBalanceReport(preview.report) }
-      : { s: handleSave, d: handleDelete, p: handlePrint }
+      : { s: handleSave, d: handleDelete, p: handlePrint, o: handlePost }
   );
-
-  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
-  useAltShortcuts(preview ? {} : { t: handlePost });
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-[#eeeeee] pb-5">

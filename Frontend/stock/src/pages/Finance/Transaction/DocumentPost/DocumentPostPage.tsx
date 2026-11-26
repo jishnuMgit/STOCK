@@ -1368,7 +1368,7 @@ const DocumentPostPage: React.FC =
                 btn-style
               "
             >
-              <u>P</u>ost
+              P<u>o</u>st
             </button>
 
             <button

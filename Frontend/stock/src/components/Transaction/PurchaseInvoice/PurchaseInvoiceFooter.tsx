@@ -48,7 +48,7 @@ const PurchaseFooter: React.FC<Props> = ({
           event.stopPropagation();
           if (!busy) onPrint();
           break;
-        case "t":
+        case "o":
           event.preventDefault();
           event.stopPropagation();
           if (!busy && !isPosted && isModify) onPost();
@@ -180,7 +180,7 @@ const PurchaseFooter: React.FC<Props> = ({
         <ActionButton
           id="btnPost"
           label="Post"
-          underlineIndex={0}
+          underlineIndex={1}
           disabled={busy || isPosted || !isModify}
           onClick={onPost}
         />
