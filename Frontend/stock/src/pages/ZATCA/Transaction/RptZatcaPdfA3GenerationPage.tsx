@@ -756,7 +756,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
             <div
               ref={gridRef}
               tabIndex={0}
-              className="h-full max-h-125 w-full overflow-auto outline-none"
+              className="receipt-table-scroll h-full max-h-125 w-full overflow-auto outline-none"
               onKeyDown={(event) => {
                 if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
                 event.preventDefault();
@@ -791,6 +791,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                     <tr
                       key={`${row.branchId}-${row.docType}-${row.docNo}`}
                       data-row={index}
+                      // 32 px, the height of a row of the Receipt / Payment grid (its boxes make the row that tall)
+                      style={{ height: 32 }}
                       className={index === currentRow ? "receipt-row-selected" : ""}
                       onClick={() => {
                         setCurrentRow(index);
@@ -816,7 +818,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   ))}
 
                   {Array.from({ length: emptyCount }, (_, i) => (
-                    <tr key={`empty-${i}`}>
+                    <tr key={`empty-${i}`} style={{ height: 32 }}>
                       {columns.map((column) => (
                         <td key={column.key} />
                       ))}

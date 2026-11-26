@@ -930,7 +930,7 @@ const ZATCASubmission: React.FC = () => {
               28 px header and rows, a full #b7ecd0 box on every cell. The side margin is the 12 px of the Payment screen. */}
           <div className="receipt-table-wrapper mt-10">
 
-            <div className="max-h-98.75 overflow-auto">
+            <div className="receipt-table-scroll max-h-98.75 overflow-auto">
 
               <table className="receipt-table min-w-262.5">
 
@@ -970,6 +970,8 @@ const ZATCASubmission: React.FC = () => {
 
                     <tr
                       key={row.id}
+                      // 32 px, the height of a row of the Receipt / Payment grid (its boxes make the row that tall)
+                      style={{ height: 32 }}
                       className={index === currentRow && row.documentNo ? "receipt-row-selected" : ""}
                       onClick={() => {
                         if (!row.documentNo) return;
