@@ -709,11 +709,11 @@ const DepreciationHistory: React.FC = () => {
             {/* BUTTONS */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[125px_minmax(0,1fr)] gap-x-4">
+          
 
               <div />
 
-              <div className="flex items-center gap-1 pl-29.5">
+              <div className="w-full flex items-center  justify-center gap-1 ">
 
                 <ActionButton
                   onClick={handlePrint}
@@ -726,7 +726,7 @@ const DepreciationHistory: React.FC = () => {
 
               </div>
 
-            </div>
+          
 
           </div>
 

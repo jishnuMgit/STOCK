@@ -726,7 +726,7 @@ const SetDocumentNo: React.FC = () => {
         >
           <Header Name="Set Document No." />
 
-          <div className="p-[12px] m-[12px]">
+          <div className="p-3 ">
 
             <div className="grid grid-cols-1 gap-3 border-b border-slate-200 pb-3 sm:grid-cols-2
              lg:grid-cols-[200px_1fr_1fr] lg:items-center lg:gap-4">
