@@ -156,10 +156,10 @@ export const buildHtml = (r: PrintReport) => {
   .co   { font-size: ${LOOK.size.company}pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
   .head { font-size: ${LOOK.size.heading}pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
   .br   { font-size: ${LOOK.size.body}pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
        padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-size: ${LOOK.size.columnHead ?? LOOK.size.body}pt; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   td.r { text-align: right; }
   tr.gh td { font-size: ${LOOK.size.group}pt; border: 0; height: 30px; padding-top: 8px; } /* space above the group line, no rule under it: as in the other reports */

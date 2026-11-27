@@ -40,7 +40,8 @@ export const REPORT_STYLE = {
     subHeight: 24,
     groupHeight: 30,
     cellPaddingX: 8, // the space left and right inside a cell
-    tableGap: 8, // the space between the branch / info line and the table
+    tableGap: 7, // the space between the branch / info line and the table
+    lineWidth: 0.5, // the lines of a table, in pixels (the one value for every report and document print)
   },
 
   // PDF, in millimetres
@@ -48,7 +49,7 @@ export const REPORT_STYLE = {
     cellPadding: 1.2, // top and bottom inside a cell
     cellPaddingX: 2, // left and right inside a cell
     tableGap: 2.2, // the space between the branch / info line and the table (8 px)
-    lineWidth: 0.2,
+    lineWidth: 0.2, // the lines of a table, in mm (the one value for every report and document PDF)
     minCellHeight: 7,
     margin: { top: 12.7, right: 10, bottom: 12.7 },
     // the gap between the company name and the heading (the heading, the branch line and the table move down by it)
@@ -184,15 +185,15 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   .sub  { height: ${html.subHeight + html.tableGap}px; vertical-align: top; } /* the gap under it is the space before the table */
   .sub div { display: flex; justify-content: space-between; gap: 16px; }
   .sub .info { ${reportInfo ? "display: none; " : ""}font-size: ${size.small}pt; } /* with a reportInfo it is printed at the bottom right of the page */
-  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; height: ${html.rowHeight}px;
        padding: 0 ${html.cellPaddingX}px; ${columnHeadCss(size)}font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${html.cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${html.cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
   td.r, td.u { white-space: nowrap; }                /* a number or a unit is never split over two lines */
   ${groupSelector} { border: 0; height: ${html.groupHeight}px; padding-top: 8px; font-size: ${size.group}pt; }
-  tr.tot td, tr.first td { border-top: 1px solid ${lineColor}; }
+  tr.tot td, tr.first td { border-top: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; }
   tbody.newpage { break-before: page; page-break-before: always; } /* a block that starts on a new page (not the first one) */
   tbody.keep { break-inside: avoid; page-break-inside: avoid; } /* a block (<tbody class="keep">) is never split over two pages */
   ${extra}`;
@@ -208,6 +209,10 @@ type DocumentPrintCssOptions = {
   reportInfo: string;
   // the space left and right inside a cell, in pixels
   cellPaddingX?: number;
+  // the word before the report info at the bottom right: "Printed" (default) or e.g. "Saved By"
+  infoLabel?: string;
+  // the size of "Page x of y" and "Printed : ..." as a CSS length, e.g. "11px" (default: the look's small size, 8pt)
+  smallSize?: string;
   // anything this print needs on top
   extra?: string;
 };
@@ -222,6 +227,8 @@ export const documentPrintCss = ({
   margin,
   reportInfo,
   cellPaddingX = REPORT_STYLE.html.cellPaddingX,
+  smallSize,
+  infoLabel = "Printed",
   extra = "",
 }: DocumentPrintCssOptions) => {
   const { lineColor, html } = REPORT_STYLE;
@@ -232,8 +239,8 @@ export const documentPrintCss = ({
   @page {
     size: A4 ${orientation};
     margin: ${margin};
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
-    @bottom-right { content: "Printed : ${reportInfo}"; font: ${size.small}pt ${font}; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${smallSize ?? `${size.small}pt`} ${font}; }
+    @bottom-right { content: "${infoLabel} : ${reportInfo}"; font: ${smallSize ?? `${size.small}pt`} ${font}; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: ${size.docBody}pt ${font}; color: #000;
@@ -246,12 +253,12 @@ export const documentPrintCss = ({
   .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight}px; }
   .info { height: ${html.subHeight + html.tableGap}px; vertical-align: top; }
   .info div { display: flex; justify-content: space-between; gap: 16px; }
-  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; height: ${html.rowHeight}px;
        padding: 0 ${cellPaddingX}px; ${columnHeadCss(size)}font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
-  tr.tot td { border-top: 1px solid ${lineColor}; }
+  tr.tot td { border-top: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; }
   ${extra}`;
 };

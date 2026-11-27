@@ -124,7 +124,7 @@ const StockAdjustmentAction: React.FC = () => {
           type="button"
           className="btn-style"
         >
-          <u>P</u>ost
+          P<u>o</u>st
         </button>
 
         {/* CLEAR */}

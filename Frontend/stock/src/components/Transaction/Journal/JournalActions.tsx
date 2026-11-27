@@ -179,7 +179,7 @@ const JournalActions = forwardRef<JournalActionsRef, JournalActionsProps>(
                         onPrint?.();
                         break;
 
-                    case "t":
+                    case "o":
                         event.preventDefault();
                         event.stopPropagation();
                         if (isPosted) return;
@@ -247,7 +247,7 @@ const JournalActions = forwardRef<JournalActionsRef, JournalActionsProps>(
                     ref={postRef}
                     id="btnPost"
                     label="Post"
-                    underlineIndex={3}
+                    underlineIndex={1}
                     disabled={isPosted}
                     onFocus={() => handleFocus(4)}
                     onKeyDown={handleKeyDown}

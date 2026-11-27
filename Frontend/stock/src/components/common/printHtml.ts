@@ -23,22 +23,25 @@ export const cssStr = (v: unknown) =>
 // line "Printed : ..." (bottom right, in the font of the page's own margin box), taken from the page's @bottom-right rule.
 // Put the style before </head> and the line before </body>; a page without a "Printed" rule gets nothing.
 export const previewPrintedLine = (html: string): { css: string; line: string } => {
-  const rule = /@bottom-right\s*\{\s*content:\s*"Printed : ((?:[^"\\]|\\.)*)";\s*font:\s*([^;}]+);/.exec(html);
+  const rule = /@bottom-right\s*\{\s*content:\s*"([A-Za-z ]+) : ((?:[^"\\]|\\.)*)";\s*font:\s*([^;}]+);/.exec(html);
   if (!rule) return { css: "", line: "" };
 
+  // the word before the info: "Printed", or "Saved By" on a document that shows who saved it
+  const label = rule[1];
+
   // undo cssStr(): \3C = "<", \" = ", \\ = \
-  const text = rule[1]
+  const text = rule[2]
     .replace(/\\3C /g, "<")
     .replace(/\\(["\\])/g, "$1");
 
   return {
-    css: `.preview-printed{text-align:right;margin:16px 0 8px;font:${rule[2]};color:#000}`,
-    line: `<div class="preview-printed">Printed : ${esc(text)}</div>`,
+    css: `.preview-printed{text-align:right;margin:16px 0 8px;font:${rule[3]};color:#000}`,
+    line: `<div class="preview-printed">${esc(label)} : ${esc(text)}</div>`,
   };
 };
 
 // The preview also shows "Page x of y" - a browser draws it (the page's @top-right margin box) only when it prints. This returns
-// the label for the preview: at the right end of the Branch line (the first td.sub / td.info / td.br of the page - where the PDF
+// the label for the preview: at the right end of the Branch line - or of a line of its own (td.pagerow, between the heading and the Branch line) - the first td.pagerow / td.sub / td.info / td.br of the page - where the PDF
 // and the printed page put it), in the font of the page's own margin box. The label starts as "Page 1 of 1"; the preview puts
 // the real number of pages in it (the class "preview-page"). A page without a "Page" margin box gets nothing.
 export const previewPageNumber = (html: string): { css: string; label: string; script: string } => {
@@ -49,7 +52,7 @@ export const previewPageNumber = (html: string): { css: string; label: string; s
     css: `.preview-page{position:absolute;right:20px;top:0;visibility:hidden;font:${rule[1]};color:#000}`,
     label: `<div class="preview-page">Page 1 of 1</div>`,
     script:
-      `<script>(function(){var p=document.querySelector('.preview-page');var e=document.querySelector('td.sub,td.info,td.br');` +
+      `<script>(function(){var p=document.querySelector('.preview-page');var e=document.querySelector('td.pagerow,td.sub,td.info,td.br');` +
       `if(!p||!e)return;p.style.top=(e.getBoundingClientRect().top+window.scrollY)+'px';p.style.visibility='visible';})();</script>`,
   };
 };

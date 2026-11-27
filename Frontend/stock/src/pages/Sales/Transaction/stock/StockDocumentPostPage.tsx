@@ -319,11 +319,10 @@ const StockDocumentPostPage: React.FC = () => {
     }
   };
 
-  // Post: Ctrl+T (the old form's key) and Alt+P (the underlined letter of the button, which Chrome always lets through).
-  // Chrome keeps Ctrl+T for "new tab" and never hands it to the page, so Ctrl+T only reaches this page in a window that
-  // allows it (an installed app window, another browser ...).
-  useCtrlShortcuts({ t: () => void handlePost() });
-  useAltShortcuts({ p: () => void handlePost() });
+  // Post: Ctrl+O and Alt+O (the underlined letter of the button).
+  // Ctrl+O may be intercepted by the browser to open a file, so it only reaches this page when the browser allows it.
+  useCtrlShortcuts({ o: () => void handlePost() });
+  useAltShortcuts({ o: () => void handlePost() });
 
   return (
     <div

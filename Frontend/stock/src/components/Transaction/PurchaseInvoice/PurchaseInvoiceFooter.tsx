@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import ActionButton from "../../common/ActionButton";
 
 interface Props {
   note: string;
@@ -27,18 +28,37 @@ const PurchaseFooter: React.FC<Props> = ({
   onPost,
   onClear,
 }) => {
-  const buttons = [
-    {
-      label: isModify ? "Modify" : "Save",
-      onClick: onSave,
-      disabled: isPosted,
-    },
-    { label: "Delete", onClick: onDelete, disabled: isPosted },
-    { label: "Print", onClick: onPrint, disabled: false },
-    // Post only works on a saved (loaded) invoice that is not posted yet
-    { label: "Post", onClick: onPost, disabled: isPosted || !isModify },
-    { label: "Clear", onClick: onClear, disabled: false },
-  ];
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+
+      switch (event.key.toLowerCase()) {
+        case "s":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && !isPosted) onSave();
+          break;
+        case "d":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && !isPosted) onDelete();
+          break;
+        case "p":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy) onPrint();
+          break;
+        case "o":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && !isPosted && isModify) onPost();
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [busy, isModify, isPosted, onDelete, onPost, onPrint, onSave]);
 
   return (
     <footer className="shrink-0 px-3 pb-3 pt-1">
@@ -134,23 +154,43 @@ const PurchaseFooter: React.FC<Props> = ({
       {/* Action buttons */}
       <div
         id="purchase-footer-actions"
-        className="mt-[9px] mb-[5px] flex flex-wrap justify-center gap-[12px]"
+        className="mt-[9px] flex flex-wrap justify-center gap-[12px]"
       >
-        {buttons.map(({ label, onClick, disabled }) => (
-          <button
-            key={label}
-            id={`btn${label}`}
-            type="button"
-            disabled={busy || disabled}
-            onClick={onClick}
-            className="btn-style"
-          >
-            <span className="underline decoration-green-600 decoration-1 underline-offset-2">
-              {label.charAt(0)}
-            </span>
-            {label.slice(1)}
-          </button>
-        ))}
+        <ActionButton
+          id={isModify ? "btnModify" : "btnSave"}
+          label={isModify ? "Modify" : "Save"}
+          underlineIndex={0}
+          disabled={busy || isPosted}
+          onClick={onSave}
+        />
+        <ActionButton
+          id="btnDelete"
+          label="Delete"
+          underlineIndex={0}
+          disabled={busy || isPosted}
+          onClick={onDelete}
+        />
+        <ActionButton
+          id="btnPrint"
+          label="Print"
+          underlineIndex={0}
+          disabled={busy}
+          onClick={onPrint}
+        />
+        <ActionButton
+          id="btnPost"
+          label="Post"
+          underlineIndex={1}
+          disabled={busy || isPosted || !isModify}
+          onClick={onPost}
+        />
+        <ActionButton
+          id="btnClear"
+          label="Clear"
+          // underlineIndex={0}
+          disabled={busy}
+          onClick={onClear}
+        />
       </div>
     </footer>
   );

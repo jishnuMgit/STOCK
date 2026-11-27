@@ -1,5 +1,6 @@
 import React from "react";
 import { formatAmount } from "./StockDocumentPostShared";
+import ActionButton from "../../common/ActionButton";
 
 type StockDocumentPostFooterProps = {
   selectedCount: number;
@@ -29,16 +30,14 @@ const StockDocumentPostFooter: React.FC<StockDocumentPostFooterProps> = ({
     </div>
 
     {/* Actions */}
-    <div className="mt-0 flex justify-center gap-3">
-      <button
+    <div className="-mb-3 flex justify-center gap-3">
+      <ActionButton
         id="btnPost"
-        type="button"
+        label="Post"
+        underlineIndex={1}
         onClick={onPost}
         disabled={postDisabled}
-        className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <u>P</u>ost
-      </button>
+      />
     </div>
   </div>
 );

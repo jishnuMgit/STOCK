@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import CloseButton from "./CloseButton";
+import { createPortal } from "react-dom";
 
 export type MessageType = "success" | "error" | "warning" | "info";
 
@@ -75,9 +76,9 @@ const MessageModal: React.FC<MessageModalProps> = ({
 
     if (!open) return null;
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-3"
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-3"
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
@@ -102,7 +103,7 @@ const MessageModal: React.FC<MessageModalProps> = ({
                         onClick={onClose}
                         className={`flex h-5 w-5 items-center justify-center text-[16px] leading-none text-slate-700 hover:text-black ${focusStyle}`}
                     >
-                    <CloseButton onClose={() => {}} />
+                        <CloseButton onClose={() => { }} />
                     </button>
                 </div>
 
@@ -125,7 +126,8 @@ const MessageModal: React.FC<MessageModalProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 };
 

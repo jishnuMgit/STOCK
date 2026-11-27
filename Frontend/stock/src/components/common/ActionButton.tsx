@@ -2,9 +2,10 @@ import { forwardRef } from "react";
 
 interface ActionButtonProps {
     label: string;
-    /** index of the letter to underline (shortcut letter). Omit for none */
+    /** index of the shortcut letter to highlight. Omit for none */
     underlineIndex?: number;
     id?: string;
+    title?: string;
     onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     onFocus?: () => void;
     onKeyDown?: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
@@ -12,8 +13,7 @@ interface ActionButtonProps {
     type?: "button" | "submit";
 }
 
-const textClass =
-    "bg-gradient-to-b from-[#145c34] via-[#20884e] to-[#8fd9ad] bg-clip-text text-transparent font-medium";
+const textClass = "font-medium text-slate-500";
 
 const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
     (
@@ -21,6 +21,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
             label,
             underlineIndex,
             id,
+            title,
             onClick,
             onFocus,
             onKeyDown,
@@ -38,6 +39,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
             <button
                 ref={ref}
                 id={id}
+                title={title}
                 type={type}
                 disabled={disabled}
                 onClick={onClick}
@@ -50,7 +52,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
                     {hasUnderline ? (
                         <>
                             {label.slice(0, underlineIndex)}
-                            <span className="underline decoration-2 underline-offset-1">
+                            <span className="font-bold text-green-600">
                                 {label[underlineIndex!]}
                             </span>
                             {label.slice(underlineIndex! + 1)}

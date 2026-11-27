@@ -1,3 +1,4 @@
+import { savedByInfo } from "../../../utils/savedByInfo.js";
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
 import { resolveServerDate } from "../../common/DateTimeService.js";
@@ -873,6 +874,8 @@ export type BeginningStockPrint = {
     fbrname: string;
     fdate: string | null;
     fdocno: string;
+    // "<user>  dd/mm/yyyy hh:mm" of the save: the "Saved By" line at the bottom right of the print
+    fsavedby: string;
   };
   lines: BeginningStockPrintLine[];
 };
@@ -929,6 +932,7 @@ export async function getBeginningStockPrintService(
       fbrname: String(lines[0]?.fbrname ?? ""),
       fdate: document.header?.fdate ?? null,
       fdocno: String(lines[0]?.fdocno ?? DOC_NO),
+      fsavedby: savedByInfo(document.header?.fsuserid, document.header?.fsuserdate),
     },
     lines,
   };

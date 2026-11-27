@@ -1630,27 +1630,29 @@ const ItemPage: React.FC = () => {
               ACTION BUTTONS
           =================================================== */}
 
-              <TransactionActions
-                className="mt-3.5 flex justify-center gap-3"
-                actions={[
-                  {
-                    id: hasSavedItem ? "Modifybtn" : "Savebtn",
-                    label: actionWord,
-                    underlineIndex: 0,
-                    onClick: handleSave,
-                    disabled: !canSaveOrModify,
-                  },
-                  { id: "Findbtn", label: "Search", underlineIndex: 0, onClick: handleFind },
-                  {
-                    id: "Deletebtn",
-                    label: "Delete",
-                    underlineIndex: 0,
-                    onClick: handleDelete,
-                    disabled: !perms.delete,
-                  },
-                  { id: "Clearbtn", label: "Clear", onClick: handleClear },
-                ]}
-              />
+              <div className="-mb-3">
+                <TransactionActions
+                  className="mt-3.5 flex justify-center gap-3"
+                  actions={[
+                    {
+                      id: hasSavedItem ? "Modifybtn" : "Savebtn",
+                      label: actionWord,
+                      underlineIndex: 0,
+                      onClick: handleSave,
+                      disabled: !canSaveOrModify,
+                    },
+                    { id: "Findbtn", label: "Search", underlineIndex: 0, onClick: handleFind },
+                    {
+                      id: "Deletebtn",
+                      label: "Delete",
+                      underlineIndex: 0,
+                      onClick: handleDelete,
+                      disabled: !perms.delete,
+                    },
+                    { id: "Clearbtn", label: "Clear", onClick: handleClear },
+                  ]}
+                />
+              </div>
 
             </div>
 

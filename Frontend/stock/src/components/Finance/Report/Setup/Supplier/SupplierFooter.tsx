@@ -1,4 +1,6 @@
 import React from "react";
+import ActionButton from "../../../../common/ActionButton";
+import { useCtrlShortcuts } from "../../../../../hooks/useCtrlShortcuts";
 
 // ============================================================
 // TYPES
@@ -29,10 +31,6 @@ interface SupplierFooterProps {
     onDelete: () => void;
     onClear: () => void;
 }
-
-const buttonClass = `h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
-    text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px
-    disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0`;
 
 const checkLabelClass =
     "flex cursor-pointer items-center gap-2 text-[12px] text-slate-700";
@@ -68,6 +66,15 @@ const SupplierFooter: React.FC<SupplierFooterProps> = ({
     onDelete,
     onClear,
 }) => {
+    useCtrlShortcuts({
+        s: () => {
+            if (!saveDisabled) onSave();
+        },
+        d: () => {
+            if (!deleteDisabled) onDelete();
+        },
+    });
+
     return (
         <div className="border-t border-slate-200 bg-white">
             {/* CHECKBOX SECTION */}
@@ -139,38 +146,29 @@ const SupplierFooter: React.FC<SupplierFooterProps> = ({
             {/* BUTTON SECTION */}
 
             <div className="flex flex-wrap justify-center gap-2 border-t border-slate-200 px-3 py-3 sm:gap-3">
-                <button
+                <ActionButton
                     id="Save"
-                    name="Save"
-                    type="button"
+                    label={saveLabel}
+                    underlineIndex={0}
                     onClick={onSave}
                     disabled={saveDisabled}
-                    className={buttonClass}
-                >
-                    {saveLabel}
-                </button>
+                />
 
-                <button
+                <ActionButton
                     id="Delete"
-                    name="Delete"
-                    type="button"
+                    label="Delete"
+                    underlineIndex={0}
                     onClick={onDelete}
                     disabled={deleteDisabled}
-                    className={buttonClass}
-                >
-                    Delete
-                </button>
+                />
 
-                <button
+                <ActionButton
                     id="Clear"
-                    name="Clear"
-                    type="button"
+                    label="Clear"
+                    // underlineIndex={0}
                     onClick={onClear}
                     disabled={clearDisabled}
-                    className={buttonClass}
-                >
-                    Clear
-                </button>
+                />
             </div>
         </div>
     );

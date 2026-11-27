@@ -423,8 +423,12 @@ const DisposalSchedulePage: React.FC = () => {
                     firstHeader="Cost Center ID"
                     secondHeader="Cost Center Name"
                     firstWidth={190}
-                    secondWidth={450}
+                    // 290 px: the Name list (Name | ID) is 190 px wider than its box, and must end inside the window
+                    secondWidth={290}
                     gap={5}
+                    listLook="receipt"
+                    // the ID column of the Name list starts where the Name box ends
+                    nameDividerAtBoxEnd
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -476,8 +480,12 @@ const DisposalSchedulePage: React.FC = () => {
                     firstHeader="Asset ID"
                     secondHeader="Asset Name"
                     firstWidth={190}
-                    secondWidth={450}
+                    // 290 px: the Name list (Name | ID) is 190 px wider than its box, and must end inside the window
+                    secondWidth={290}
                     gap={5}
+                    listLook="receipt"
+                    // the ID column of the Name list starts where the Name box ends
+                    nameDividerAtBoxEnd
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }

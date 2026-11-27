@@ -6,6 +6,7 @@ import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useMessageModal } from "../../../hooks/useMessageModal";
 import Header from "../../../components/common/Header";
+import ActionButton from "../../../components/common/ActionButton";
 
 // ============================================================
 // TYPES
@@ -600,10 +601,9 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
   // ============================================================
   // KEYBOARD SHORTCUTS (page wide)
-  //  Alt+S  Save    (only when nothing is saved yet)
+  //  Ctrl+S / Alt+S  Save / Modify
   //  Alt+F  Find
-  //  Alt+N  Cancel
-  //  Alt+C  Close
+  //  Alt+C  Clear
   //  Ctrl+Delete  delete the selected row (also when focus is not in a box)
   // No dependency array on purpose: the listener is re-attached after every
   // render, so it always sees the latest rows / permissions / handlers.
@@ -611,6 +611,20 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.ctrlKey &&
+        !event.altKey &&
+        !event.metaKey &&
+        event.code === "KeyS"
+      ) {
+        event.preventDefault();
+
+        if (!canSaveOrModify || saving) return;
+
+        handleSave();
+        return;
+      }
+
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
         if (event.code === "KeyS") {
           event.preventDefault();
@@ -887,45 +901,31 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
             </div>
 
             {/* BUTTONS */}
-            <div className="mt-3.5 flex justify-center gap-3">
-              <button
+            <div className="mt-3.5 -mb-3 flex justify-center gap-3">
+              <ActionButton
                 id="btnSave"
-                name="btnSave"
-                type="button"
+                label={actionWord}
+                underlineIndex={0}
                 onClick={handleSave}
                 disabled={!canSaveOrModify || saving}
-                title="Alt+S"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
-              </button>
+                title="Ctrl+S / Alt+S"
+              />
 
-              <button
+              <ActionButton
                 id="btnSearch"
-                name="btnSearch"
-                type="button"
+                label="Search"
+                underlineIndex={1}
                 // onClick={openFind}
                 title="Alt+F"
-                className="btn-style"
-              >
-                S<span className="underline underline-offset-2">e</span>arch
-              </button>
+              />
 
-              <button
+              <ActionButton
                 id="btnClear"
-                name="btnClear"
-                type="button"
+                label="Clear"
+                underlineIndex={0}
                 onClick={handleClear}
-                title="Alt+N"
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">C</span>lear
-              </button>
-
-
+                title="Alt+C"
+              />
             </div>
           </div>
         </div>

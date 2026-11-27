@@ -23,7 +23,7 @@ import {
 
 import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
+const BORDER: RGB = [199, 209, 228]; // #c7d1e4 (REPORT_STYLE.lineColor)
 
 // same column proportions as the printed page
 const COL_PCT = [11.6, 9.9, 17, 12.5, 10.4, 9.9, 13.2, 15.5]; // Document No. wide enough for its 14 px label
@@ -201,7 +201,7 @@ export const buildItemHistoryPdf = async (report: PrintReport): Promise<Blob> =>
         fontSize: look.size.pdfBody,
         cellPadding: PDF_CELL_PADDING,
         lineColor: BORDER,
-        lineWidth: 0.2,
+        lineWidth: REPORT_STYLE.pdf.lineWidth,
         minCellHeight: REPORT_STYLE.pdf.minCellHeight,
         valign: "middle",
         overflow: "ellipsize",

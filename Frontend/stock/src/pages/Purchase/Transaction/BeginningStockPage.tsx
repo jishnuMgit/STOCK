@@ -14,7 +14,6 @@ import { accountDropdownStyles } from "../../../components/Transaction/Receipt/s
 import CommonTableSelect from "../../../components/common/CommonTableSelect";
 import { useScrollbarWidth } from "../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
@@ -1548,11 +1547,8 @@ const BeginningStockPage: React.FC = () => {
   useCtrlShortcuts(
     preview
       ? { p: () => printBeginningStockReport(preview.report) }
-      : { s: handleSave, d: handleDelete, p: handlePrint }
+      : { s: handleSave, d: handleDelete, p: handlePrint, o: handlePost }
   );
-
-  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
-  useAltShortcuts(preview ? {} : { t: handlePost });
 
   // ==========================================================
   // JSX
@@ -1695,8 +1691,8 @@ const BeginningStockPage: React.FC = () => {
                       // the highlighted row follows the cursor (any box of the row), as on the Receipt screen
                       onFocus={() => setActiveRow(index)}
                       className={`h-7 text-[12px] ${activeRow === index
-                          ? "bg-[#f9fffc]"
-                          : "bg-white"
+                        ? "bg-[#f9fffc]"
+                        : "bg-white"
                         }`}
                     >
                       {/* ROW SELECTOR */}
@@ -2016,43 +2012,45 @@ const BeginningStockPage: React.FC = () => {
           )}
 
           {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+D, Ctrl+P, Alt+T) */}
-          <TransactionActions
-            actions={[
-              {
-                id: chkSaved ? "btnModify" : "btnSave",
-                label: actionWord,
-                underlineIndex: 0,
-                onClick: handleSave,
-                disabled: !canSaveOrModify || saving || chkPosted,
-              },
-              {
-                id: "btnDelete",
-                label: "Delete",
-                underlineIndex: 0,
-                onClick: handleDelete,
-                disabled: !chkSaved || chkPosted || !perms.delete || saving,
-              },
-              {
-                id: "btnPrint",
-                label: "Print",
-                underlineIndex: 0,
-                onClick: handlePrint,
-                disabled: !chkSaved || !perms.print || saving,
-              },
-              {
-                id: "btnPost",
-                label: "Post",
-                underlineIndex: 3,
-                onClick: handlePost,
-                disabled: !chkSaved || chkPosted || !perms.post || saving,
-              },
-              {
-                id: "btnClear",
-                label: "Clear",
-                onClick: clearForm,
-              },
-            ]}
-          />
+          <div className="-mb-3">
+            <TransactionActions
+              actions={[
+                {
+                  id: chkSaved ? "btnModify" : "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify || saving || chkPosted,
+                },
+                {
+                  id: "btnDelete",
+                  label: "Delete",
+                  underlineIndex: 0,
+                  onClick: handleDelete,
+                  disabled: !chkSaved || chkPosted || !perms.delete || saving,
+                },
+                {
+                  id: "btnPrint",
+                  label: "Print",
+                  underlineIndex: 0,
+                  onClick: handlePrint,
+                  disabled: !chkSaved || !perms.print || saving,
+                },
+                {
+                  id: "btnPost",
+                  label: "Post",
+                  underlineIndex: 1,
+                  onClick: handlePost,
+                  disabled: !chkSaved || chkPosted || !perms.post || saving,
+                },
+                {
+                  id: "btnClear",
+                  label: "Clear",
+                  onClick: clearForm,
+                },
+              ]}
+            />
+          </div>
 
         </div>
       </main>

@@ -12,7 +12,6 @@ import { filterPairOption } from "../../../../components/PairSelect/pairSelectPa
 import { accountDropdownStyles } from "../../../../components/Transaction/Receipt/save/ReactSelectStyles";
 import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
-import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
@@ -26,7 +25,7 @@ import {
   buildHtml,
   printStockTransferReport,
   type PrintReport,
-} from "../../../../components/Transaction/StockTransfer/StockTransferPrintReport";
+} from "../../../../components/Transaction/StockTransfer/RptStockTransferPrint";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";
@@ -342,6 +341,7 @@ const selectStyles = {
 // TABLE SELECT STYLES
 // ============================================================
 
+// the values in the grid boxes are 11 px, like the rest of the grid (the open lists stay 12 px)
 const tableSelectStyles: StylesConfig<SelectOption, false> = {
   ...selectStyles,
   //@ts-ignore
@@ -354,7 +354,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     boxShadow: "none",
     outline: "none",
     backgroundColor: "transparent",
-    fontSize: "12px",
+    fontSize: "11px",
     cursor: "pointer",
 
     "&:hover": {
@@ -371,14 +371,14 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#374151",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#94a3b8",
   }),
 
@@ -386,7 +386,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "12px",
+    fontSize: "11px",
   }),
 
   indicatorsContainer: (base) => ({
@@ -1805,11 +1805,8 @@ const StockTransferPage: React.FC = () => {
   useCtrlShortcuts(
     preview
       ? { p: () => printStockTransferReport(preview.report) }
-      : { s: handleSave, d: handleDelete, p: handlePrint }
+      : { s: handleSave, d: handleDelete, p: handlePrint, o: handlePost }
   );
-
-  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
-  useAltShortcuts(preview ? {} : { t: handlePost });
 
   // ==========================================================
   // JSX
@@ -2002,7 +1999,7 @@ const StockTransferPage: React.FC = () => {
                 </colgroup>
 
                 <thead className="sticky top-0 z-10 bg-[#edf9f2]">
-                  <tr className="h-7 text-left text-[12px] text-[#344054]">
+                  <tr className="h-7 text-left text-[11px] text-[#344054]">
                     <th className="border border-[#bfe8d0] px-1 font-medium"></th>
                     <th className="border border-[#bfe8d0] px-1 text-center font-medium">Line</th>
                     <th className="border border-[#bfe8d0] px-2 font-medium">Item ID</th>
@@ -2025,7 +2022,7 @@ const StockTransferPage: React.FC = () => {
                       }}
                       // the highlighted row follows the cursor (any box of the row), as on the Receipt screen
                       onFocus={() => setActiveRow(index)}
-                      className={`h-7 text-[12px] ${activeRow === index ? "bg-[#f9fffc]" : "bg-white"
+                      className={`h-7 text-[11px] ${activeRow === index ? "bg-[#f9fffc]" : "bg-white"
                         }`}
                     >
                       {/* ROW SELECTOR */}
@@ -2324,44 +2321,46 @@ const StockTransferPage: React.FC = () => {
             </table>
           )}
 
-          {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+D, Ctrl+P, Ctrl+T) */}
-          <TransactionActions
-            actions={[
-              {
-                id: chkSaved ? "btnModify" : "btnSave",
-                label: actionWord,
-                underlineIndex: 0,
-                onClick: handleSave,
-                disabled: !canSaveOrModify || saving || chkPosted,
-              },
-              {
-                id: "btnDelete",
-                label: "Delete",
-                underlineIndex: 0,
-                onClick: handleDelete,
-                disabled: !chkSaved || chkPosted || !perms.delete || saving,
-              },
-              {
-                id: "btnPrint",
-                label: "Print",
-                underlineIndex: 0,
-                onClick: handlePrint,
-                disabled: !chkSaved || !perms.print || saving,
-              },
-              {
-                id: "btnPost",
-                label: "Post",
-                underlineIndex: 3,
-                onClick: handlePost,
-                disabled: !chkSaved || chkPosted || !perms.post || saving,
-              },
-              {
-                id: "btnClear",
-                label: "Clear",
-                onClick: clearForm,
-              },
-            ]}
-          />
+          {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+D, Ctrl+P, Ctrl+O) */}
+          <div className="-mb-3">
+            <TransactionActions
+              actions={[
+                {
+                  id: chkSaved ? "btnModify" : "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify || saving || chkPosted,
+                },
+                {
+                  id: "btnDelete",
+                  label: "Delete",
+                  underlineIndex: 0,
+                  onClick: handleDelete,
+                  disabled: !chkSaved || chkPosted || !perms.delete || saving,
+                },
+                {
+                  id: "btnPrint",
+                  label: "Print",
+                  underlineIndex: 0,
+                  onClick: handlePrint,
+                  disabled: !chkSaved || !perms.print || saving,
+                },
+                {
+                  id: "btnPost",
+                  label: "Post",
+                  underlineIndex: 1,
+                  onClick: handlePost,
+                  disabled: !chkSaved || chkPosted || !perms.post || saving,
+                },
+                {
+                  id: "btnClear",
+                  label: "Clear",
+                  onClick: clearForm,
+                },
+              ]}
+            />
+          </div>
 
         </div>
       </main>
