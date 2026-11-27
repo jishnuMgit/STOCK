@@ -692,7 +692,7 @@ export async function saveReceiptService(
     }
 
     return {
-      message: "Receipt saved successfully",
+      message: "Saved Successfully",
 
       data: {
         pstrCoID,
@@ -769,7 +769,7 @@ export async function deleteReceiptService(
     await client.query("COMMIT");
 
     return {
-      message: "Receipt deleted successfully",
+      message: "Deleted Successfully",
 
       data: {
         pstrCoID,
@@ -1030,7 +1030,7 @@ export async function updateReceiptService(
     await client.query("COMMIT");
 
     return {
-      message: "Receipt modified successfully",
+      message: "Modified Successfully",
 
       data: {
         pstrCoID,
