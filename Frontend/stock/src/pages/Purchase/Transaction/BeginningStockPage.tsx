@@ -1562,7 +1562,7 @@ const BeginningStockPage: React.FC = () => {
     // the frame: up to 1200px wide, centred on the light-gray page, 20px from the
     // top. No minimum width (like the Purchase Invoice page): with the side menu
     // open it shrinks to the space it has instead of spilling out under the menu.
-    <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
+    <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-3">
       <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
         {/* TITLE BAR */}
@@ -1570,7 +1570,7 @@ const BeginningStockPage: React.FC = () => {
 
         {/* FORM BODY - 12px round it, but nothing extra above the Branch row (as
           the Sales Invoice page: the Branch box is ~12px under the title bar) */}
-        <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">
+        <div className="m-[12px] flex min-h-0 flex-1 flex-col pt-0">
 
           {/* HEADER FORM */}
           <section className="mb-3 flex h-[30px] bg-white shrink-0 items-center justify-between gap-8">
