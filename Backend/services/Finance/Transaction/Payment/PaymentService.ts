@@ -420,7 +420,7 @@ export async function savePaymentService(
         }
 
         return {
-            message: "saved successfully",
+            message: "Saved Successfully",
             data: {
                 pstrCoID,
                 pstrYear,
@@ -481,7 +481,7 @@ export async function deletePaymentService(
         await client.query("COMMIT");
 
         return {
-            message: "Payment deleted successfully",
+            message: "Payment deleted Successfully",
             data: {
                 pstrCoID,
                 pstrYear,
@@ -649,7 +649,7 @@ export async function updatePaymentService(
         await client.query("COMMIT");
 
         return {
-            message: "Modified successfully",
+            message: "Modified Successfully",
             data: {
                 pstrCoID,
                 pstrYear,
