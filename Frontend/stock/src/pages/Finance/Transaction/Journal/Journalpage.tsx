@@ -656,7 +656,7 @@ const JournalPage: React.FC = () => {
         })),
       });
 
-      notify.success(isExisting ? "Modified" : "Saved");
+      notify.success(isExisting ? "Modified successfully" : "Saved successfully");
 
       clearForm();
     } catch (error: unknown) {
