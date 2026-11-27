@@ -144,7 +144,7 @@ const CommonTableSelect = ({
               key={col.key}
               className={`
                 flex min-w-0 h-full items-center
-                truncate pl-[2px] pr-[5px]
+                truncate pl-0.5 pr-1.25
                 ${getAlignment(col.align)}
                 ${index > 0 ? (receipt ? "border-l border-[#EEEEEE]" : "border-l border-[#D5DDE5]") : ""}
               `}
@@ -186,7 +186,7 @@ const CommonTableSelect = ({
                 key={col.key}
                 className={`
                   flex min-w-0 h-full items-center
-                  truncate pl-[2px] pr-[5px]
+                  truncate pl-0.5 pr-1.25
                   ${getAlignment(col.align)}
                   ${index > 0 ? (receipt ? "border-l border-[#CCCCCC]" : "border-l border-[#D5DDE5]") : ""}
                 `}
