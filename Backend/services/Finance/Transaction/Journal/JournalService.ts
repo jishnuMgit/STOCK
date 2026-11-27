@@ -473,7 +473,7 @@ export async function saveJournalService(
         await client.query("COMMIT");
 
         return {
-            message: "Saved",
+            message: "Saved successfully",
 
             data: {
                 pstrCoID,
@@ -566,7 +566,7 @@ export async function updateJournalService(
         await client.query("COMMIT");
 
         return {
-            message: "Modified",
+            message: "Modified successfully",
 
             data: {
                 pstrCoID,
@@ -645,7 +645,7 @@ export async function postJournalService(
         );
 
         return {
-            message: "Document posted",
+            message: "Posted successfully",
 
             data: {
                 pstrCoID,
@@ -722,7 +722,7 @@ export async function deleteJournalService(
         await client.query("COMMIT");
 
         return {
-            message: "Journal deleted successfully",
+            message: "Deleted successfully",
 
             data: {
                 pstrCoID,
