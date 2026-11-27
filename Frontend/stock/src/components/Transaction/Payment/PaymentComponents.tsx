@@ -2744,7 +2744,7 @@ export const PaymentActions = forwardRef<
                     <ActionButton
                         ref={searchRef}
                         id="btnSearch"
-                        label="Find"
+                        label="Search"
                         underlineIndex={0}
                         onFocus={() => handleFocus(1)}
                         onKeyDown={handleKeyDown}
