@@ -16,7 +16,7 @@ export type PrintHeader = {
   dtpDate: string | null;
   // "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
   txtReportInfo: string;
-  // "<user>  dd/mm/yyyy hh:mm" of the save - bottom right of every page, after "Saved By :" (the print's own user and time are used when empty)
+  // "<user>  dd/mm/yyyy hh:mm" of the save - bottom right of every page, after "Created By :" (the print's own user and time are used when empty)
   txtSavedBy?: string;
 };
 
@@ -79,7 +79,7 @@ export const buildHtml = (r: PrintReport) => {
   orientation: "landscape",
   margin: "12mm 10mm 14mm 15mm",
   reportInfo: cssStr(r.txtSavedBy || r.txtReportInfo),
-  infoLabel: r.txtSavedBy ? "Saved By" : "Printed",
+  infoLabel: r.txtSavedBy ? "Created By" : "Printed",
 })}
 </style>
 </head>

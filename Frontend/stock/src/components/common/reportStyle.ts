@@ -40,7 +40,7 @@ export const REPORT_STYLE = {
     subHeight: 24,
     groupHeight: 30,
     cellPaddingX: 8, // the space left and right inside a cell
-    tableGap: 7, // the space between the branch / info line and the table
+    tableGap: 5, // the space between the branch / info line and the table
     lineWidth: 0.5, // the lines of a table, in pixels (the one value for every report and document print)
   },
 
@@ -209,7 +209,7 @@ type DocumentPrintCssOptions = {
   reportInfo: string;
   // the space left and right inside a cell, in pixels
   cellPaddingX?: number;
-  // the word before the report info at the bottom right: "Printed" (default) or e.g. "Saved By"
+  // the word before the report info at the bottom right: "Printed" (default) or e.g. "Created By"
   infoLabel?: string;
   // the size of "Page x of y" and "Printed : ..." as a CSS length, e.g. "11px" (default: the look's small size, 8pt)
   smallSize?: string;
