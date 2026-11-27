@@ -726,7 +726,7 @@ const SetDocumentNo: React.FC = () => {
           <div className="p-3 ">
 
             <div className="grid grid-cols-1 gap-3 border-b border-slate-200 pb-3 sm:grid-cols-2
-             lg:grid-cols-[200px_1fr_1fr] lg:items-center lg:gap-4">
+             lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-4">
               {/* ===================================================
               YEAR
           ==================================================== */}
@@ -802,7 +802,7 @@ const SetDocumentNo: React.FC = () => {
               MODULE
               ==================================================== */}
 
-              <div className="flex w-full items-center gap-2 sm:justify-center">
+              <div className="flex w-full items-center gap-2 sm:justify-center lg:justify-end">
                 <label
                   htmlFor="lkpModule"
                   className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
@@ -847,19 +847,19 @@ const SetDocumentNo: React.FC = () => {
                       >
                         {/* DOCUMENT */}
 
-                        <th className="w-[31%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
+                        <th className="w-[28%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
                           Document
                         </th>
 
                         {/* PREFIX */}
 
-                        <th className="w-[10%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
                           Prefix
                         </th>
 
                         {/* START SEQ NO */}
 
-                        <th className="w-[13%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Start Seq. No.
                         </th>
 
@@ -871,13 +871,13 @@ const SetDocumentNo: React.FC = () => {
 
                         {/* MODE */}
 
-                        <th className="w-[11%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           + Mode
                         </th>
 
                         {/* RESET */}
 
-                        <th className="w-[11%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Reset No.
                         </th>
 
