@@ -8,6 +8,7 @@ import {
     saveJournal,
     updateJournal,
     deleteJournal,
+    postJournal,
 } from "../../../../controller/Finance/Transaction/Journal/JournalController.js";
 import { authenticate } from "../../../../middleware/authMiddleware.js";
 import { requireReceiptContext } from "../../../../middleware/receiptContext.js";
@@ -30,6 +31,8 @@ router.get("/", getJournal);
 router.post("/", saveJournal);
 
 router.put("/", updateJournal);
+
+router.post("/post", postJournal);
 
 router.delete("/", deleteJournal);
 

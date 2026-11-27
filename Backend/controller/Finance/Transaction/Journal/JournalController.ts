@@ -12,6 +12,7 @@ import {
     saveJournalService,
     updateJournalService,
     deleteJournalService,
+    postJournalService,
 } from "../../../../services/Finance/Transaction/Journal/JournalService.js";
 
 /* TODO: use the same way the receipt controller reads the context
@@ -147,6 +148,22 @@ export async function updateJournal(req: Request, res: Response) {
         return res.status(200).json({ success: true, ...result });
     } catch (error: unknown) {
         return handleError(res, error, "Failed to modify journal");
+    }
+}
+
+/* POST /api/journal/post */
+export async function postJournal(req: Request, res: Response) {
+    try {
+        const { lkpBranch, txtDocNo } = req.body;
+
+        const result = await postJournalService(
+            { lkpBranch, txtDocNo },
+            getCtx(res),
+        );
+
+        return res.status(200).json({ success: true, ...result });
+    } catch (error: unknown) {
+        return handleError(res, error, "Failed to post journal");
     }
 }
 
