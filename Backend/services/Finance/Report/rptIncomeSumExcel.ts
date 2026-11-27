@@ -38,14 +38,14 @@ export const buildIncomeSumWorkbook = async (report: IncomeSumReport): Promise<B
   ws.columns = [{ width: 14 }, { width: 46 }, { width: 16 }, { width: 16 }, { width: 18 }];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 5, 2, "inter");
+  addReportTitle(ws, report, report.txtBranch, 5, 2);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Account ID", "Account Name", "Opening", "Current", "Closing"];
 
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col >= 3 ? "right" : "left" };
   });
@@ -92,7 +92,7 @@ export const buildIncomeSumWorkbook = async (report: IncomeSumReport): Promise<B
   });
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };
@@ -156,14 +156,13 @@ const addMonthSheet = (
     { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: report.txtReportInfo },
     report.txtBranch,
     labels.length,
-    3,
-    "inter"
+    3
   );
 
   const head = ws.getRow(4);
   head.values = labels;
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col >= firstNumberColumn ? "right" : "left" };
   });
@@ -206,7 +205,7 @@ const addMonthSheet = (
     if (col >= firstNumberColumn) cell.numFmt = AMOUNT_FORMAT;
   });
 
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 };
 
 export const buildIncomeSumMonthWorkbook = async (report: IncomeSumMonthReport): Promise<Buffer> => {

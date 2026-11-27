@@ -24,7 +24,7 @@ import {
   formatTotal,
   totalsOf,
   type PrintReport,
-} from "./RptBeginningBalancePrint";
+} from "./RptBeginningBalance";
 
 const BLACK = PDF_BLACK;
 

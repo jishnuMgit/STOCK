@@ -1,21 +1,22 @@
 // RptItemPurchasePdf.ts
 // The Item Purchase report as a PDF (returned as a Blob; saveFile.ts saves it). The same layout as the printed
-// report (RptItemPurchasePrintReport.ts): A4 portrait, a block per item with its Total (the Qty).
-// Column labels repeat on every page; "Page x of y" top right; the company, the heading, the branch and the
-// report info at the top of every page.
+// report (RptItemPurchaseRpt.ts): A4 portrait, a block per item with its Total (the Qty).
+// Column labels repeat on every page; "Page x of y" on a line of its own under the heading; the company, the heading
+// and the branch at the top of every page; "Printed : ..." at the bottom right (the stock look, common/reportPdf.ts).
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  addPageNumbers,
-  drawReportTitle,
+  STOCK_DOCUMENT_PDF,
+  addStockDocumentPageNumbers,
+  drawStockReportTitle,
   pdfGroupStyles,
-  pdfHeadStyles,
   pdfMargin,
-  pdfTableStyles,
-  pdfTableTop,
   registerReportPdfFont,
+  stockDocumentTable,
+  stockReportTableTop,
 } from "../../../common/reportPdf";
+import { REPORT_STYLE } from "../../../common/reportStyle";
 
 import {
   COLUMN_COUNT,
@@ -24,7 +25,7 @@ import {
   formatPrice,
   formatQty,
   type PrintReport,
-} from "./RptItemPurchasePrintReport";
+} from "./RptItemPurchaseRpt";
 
 export const buildItemPurchasePdf = async (report: PrintReport): Promise<Blob> => {
 
@@ -34,10 +35,17 @@ export const buildItemPurchasePdf = async (report: PrintReport): Promise<Blob> =
   const pageW = 210;
   const margin = pdfMargin(18);
   const usable = pageW - margin.left - margin.right;
-  const tableTop = pdfTableTop(margin);
+  const tableTop = stockReportTableTop(margin);
 
   const right = { halign: "right" as const };
   const bold = { fontStyle: "bold" as const };
+
+  // the sides of a cell that is drawn with its own lines (the first row under the item line): the top, the right and the
+  // bottom - and the left on the first column. A cell takes its sides from stockDocumentTable() unless it names them.
+  const sides = (firstColumn: boolean) => {
+    const w = STOCK_DOCUMENT_PDF.lineWidth;
+    return { lineWidth: { top: w, right: w, bottom: w, left: firstColumn ? w : 0 } };
+  };
 
   // Date | Type | Document No. | P.I. No. | Qty. | Unit Price | Supplier
   const columnStyles: Record<number, { cellWidth: number; halign?: "right" }> = Object.fromEntries(
@@ -64,21 +72,29 @@ export const buildItemPurchasePdf = async (report: PrintReport): Promise<Blob> =
       {
         content: `Item : ${item.lkpItemID}   ${item.txtItemName}`,
         colSpan: COLUMN_COUNT,
-        styles: { ...pdfGroupStyles(look), lineWidth: 0, minCellHeight: 9, valign: "bottom" },
+        styles: {
+          ...pdfGroupStyles(look),
+          fontSize: look.size.pdfBody, // the item line is 11 px too, as the rows and the totals
+          lineWidth: 0,
+          minCellHeight: 9,
+          valign: "bottom",
+        },
       },
     ]);
 
-    for (const l of item.lines) {
+    item.lines.forEach((l, index) => {
+      // the first line under the item has the line above it (the item row has no lines)
+      const top = (first: boolean) => (index === 0 ? sides(first) : {});
       body.push([
-        { content: l.txtDate },
-        { content: l.txtDocType },
-        { content: l.txtDocNo },
-        { content: l.txtPINo },
-        { content: formatQty(l.txtQty), styles: right },
-        { content: formatPrice(l.txtUnitPrice), styles: right },
-        { content: l.txtSupplierName },
+        { content: l.txtDate, styles: top(true) },
+        { content: l.txtDocType, styles: top(false) },
+        { content: l.txtDocNo, styles: top(false) },
+        { content: l.txtPINo, styles: top(false) },
+        { content: formatQty(l.txtQty), styles: { ...right, ...top(false) } },
+        { content: formatPrice(l.txtUnitPrice), styles: { ...right, ...top(false) } },
+        { content: l.txtSupplierName, styles: top(false) },
       ]);
-    }
+    });
 
     // ---- the Total of the item (the Qty) ----
     body.push([
@@ -90,7 +106,7 @@ export const buildItemPurchasePdf = async (report: PrintReport): Promise<Blob> =
   }
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch, look);
+  const drawTitle = () => drawStockReportTitle(doc, pageW, margin, report, report.txtBranch, look);
 
   autoTable(doc, {
     theme: "plain",
@@ -99,15 +115,22 @@ export const buildItemPurchasePdf = async (report: PrintReport): Promise<Blob> =
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: pdfTableStyles(look),
-    headStyles: pdfHeadStyles(look),
+    // the stock look (common/reportPdf.ts, STOCK_DOCUMENT_PDF): the cell space, the thin light lines drawn once
+    ...stockDocumentTable(look, STOCK_DOCUMENT_PDF.cellPaddingX, STOCK_DOCUMENT_PDF.cellPaddingX),
     columnStyles,
     head,
     body,
     didDrawPage: drawTitle,
   });
 
-  addPageNumbers(doc, pageW, margin, look);
+  // "Page x of y" on a line of its own under the heading, and "Printed : ..." at the bottom right of every page
+  addStockDocumentPageNumbers(doc, look, {
+    right: pageW - margin.right,
+    pageRight: pageW - margin.right - STOCK_DOCUMENT_PDF.shiftLeft,
+    pageY: margin.top + 20 + REPORT_STYLE.pdf.titleGap,
+    bottomY: margin.bottom - 6,
+    footer: `Printed : ${report.txtReportInfo}`,
+  });
 
   return doc.output("blob");
 };

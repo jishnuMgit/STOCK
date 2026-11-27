@@ -42,13 +42,13 @@ export const buildItemPurchaseWorkbook = async (report: ItemPurchaseReport): Pro
   ];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 7, undefined, "inter");
+  addReportTitle(ws, report, report.txtBranch, 7, undefined);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Date", "Type", "Document No.", "P.I. No.", "Qty.", "Unit Price", "Supplier"];
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col === QTY_COLUMN || col === PRICE_COLUMN ? "right" : "left" };
   });
@@ -60,7 +60,7 @@ export const buildItemPurchaseWorkbook = async (report: ItemPurchaseReport): Pro
     // ---- "Item : 0001   o1item1" ----
     const heading = ws.addRow([`Item : ${item.lkpItemID}   ${item.txtItemName}`]);
     ws.mergeCells(heading.number, 1, heading.number, COLUMNS);
-    heading.getCell(1).font = levelFont("group", true, "inter");
+    heading.getCell(1).font = levelFont("group", true);
     heading.getCell(1).alignment = { horizontal: "left" };
 
     for (const l of item.lines) {
@@ -86,7 +86,7 @@ export const buildItemPurchaseWorkbook = async (report: ItemPurchaseReport): Pro
   }
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

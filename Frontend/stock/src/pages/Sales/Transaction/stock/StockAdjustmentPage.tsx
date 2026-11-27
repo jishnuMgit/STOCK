@@ -23,7 +23,7 @@ import {
   buildHtml,
   printStockAdjustmentReport,
   type PrintReport,
-} from "../../../../components/Transaction/StockAdjustment/RptStockAdjustmentPrint";
+} from "../../../../components/Transaction/StockAdjustment/RptStockAdjustment";
 import { deleteSuccessMessage } from "../../../../hooks/useDeleteToast";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 import TransactionActions from "../../../../components/common/TransactionActions";

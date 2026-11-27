@@ -87,24 +87,24 @@ export const buildItemListWorkbook = async (
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells(1, 1, 1, last);
   ws.getCell(1, 1).value = report.coName;
-  ws.getCell(1, 1).font = levelFont("company", true, "inter");
+  ws.getCell(1, 1).font = levelFont("company", true);
   ws.getCell(1, 1).alignment = { horizontal: "center" };
 
   ws.mergeCells(2, 1, 2, last);
   ws.getCell(2, 1).value = report.heading;
-  ws.getCell(2, 1).font = levelFont("heading", false, "inter");
+  ws.getCell(2, 1).font = levelFont("heading", false);
   ws.getCell(2, 1).alignment = { horizontal: "center" };
 
   ws.mergeCells(3, 1, 3, last);
   ws.getCell(3, 1).value = report.branch;
-  ws.getCell(3, 1).font = levelFont("body", false, "inter");
-  setPrintedFooter(ws, report.reportInfo, "inter"); // the user and the time: bottom right of every printed page
+  ws.getCell(3, 1).font = levelFont("body", false);
+  setPrintedFooter(ws, report.reportInfo); // the user and the time: bottom right of every printed page
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = cols.map((c) => c.label);
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: cols[col - 1].right ? "right" : "left" };
   });
@@ -119,7 +119,7 @@ export const buildItemListWorkbook = async (
         `Item Group :  ${r.itemGroupId}   ${r.itemGroupName}`,
       ]);
       ws.mergeCells(gr.number, 1, gr.number, last);
-      gr.getCell(1).font = levelFont("group", true, "inter");
+      gr.getCell(1).font = levelFont("group", true);
       gr.getCell(1).border = { bottom: { style: "thin", color: BORDER_COLOR } };
     }
 
@@ -133,7 +133,7 @@ export const buildItemListWorkbook = async (
   }
 
   // the whole sheet in the font of the shared look (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

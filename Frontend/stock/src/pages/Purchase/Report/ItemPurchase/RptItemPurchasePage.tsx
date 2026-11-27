@@ -7,7 +7,7 @@ import {
   buildHtml,
   printItemPurchaseReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptItemPurchase/RptItemPurchasePrintReport";
+} from "../../../../components/Purchase/Report/RptItemPurchase/RptItemPurchaseRpt";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";

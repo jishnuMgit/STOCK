@@ -23,7 +23,7 @@ import {
   formatQty,
   totalsOf,
   type PrintReport,
-} from "./RptBeginningStockPrint";
+} from "./RptBeginningStock";
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };

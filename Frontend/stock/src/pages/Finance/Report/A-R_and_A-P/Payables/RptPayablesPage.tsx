@@ -1,15 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { previewPrintedLine } from "../../../../../components/common/printHtml";
-import { buildPayablesPdf } from "./downloadPayablesPdf";
-import { saveFile } from "./saveFile";
+import ReportPreview from "../../../../../components/common/ReportPreview";
+import { buildPayablesPdf } from "../../../../../components/Finance/Report/RptPayables/RptPayablesPdf";
 import {
   buildHtml,
   printPayablesReport,
   type PrintReport,
-} from "./printPayablesReport";
-import Header from "../../../../../components/common/Header";
+} from "../../../../../components/Finance/Report/RptPayables/RptPayablesRpt";
 import { CustomRadio, RadioPanel } from "../../../../../components/common/ReportFormParts";
 import {
   BranchFilter,
@@ -99,7 +97,6 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
   const [printing, setPrinting] = useState(false);
 
   // rdgReportFile (inside the Print Preview): what Download saves
-  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
 
   // print preview: shown after Print. Print there sends it to the printer,
   // Download saves the "Report File" choice
@@ -255,65 +252,6 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
     }
   };
 
-  // Print in the preview: the browser print dialog (printer)
-  const handlePreviewPrint = () => {
-    if (!preview || printing) return;
-    try {
-      printPayablesReport(preview.report);
-    } catch {
-      notify.error("Could not open the print view");
-    }
-  };
-
-  // Download in the preview: saves the chosen file ("Save as" window, so the
-  // browser does not open it afterwards)
-  // a double click must not start two saves (state is not updated yet on the
-  // second click, so a ref is used)
-  const downloading = useRef(false);
-
-  const handlePreviewOk = async () => {
-    if (!preview || printing || downloading.current) return;
-    downloading.current = true;
-    const { report, fileBase, request } = preview;
-    const asPdf = reportFile === "PDF";
-
-    setPrinting(true);
-    try {
-      const blob = asPdf ? await buildPayablesPdf(report) : await fetchExcel(request);
-      if (!blob) return; // the error is already shown
-
-      const kind = asPdf ? "pdf" : "xlsx";
-      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
-      if (saved) {
-        setPreview(null); // cancelled "Save as": the preview stays
-        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
-      }
-    } catch {
-      notify.error(
-        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
-      );
-    } finally {
-      downloading.current = false;
-      setPrinting(false);
-    }
-  };
-
-  const previewHtml = useMemo(() => {
-    if (!preview) return "";
-
-    const html = buildHtml(preview.report);
-    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
-    const printed = previewPrintedLine(html);
-
-    return html
-      .replace(
-        "</head>",
-        // 40px left / 20px right margin for the preview only
-        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
-      )
-      .replace("</body>", `${printed.line}</body>`);
-  }, [preview]);
-
   const handleClose = () => {
     setBranchMode("One Branch");
     setBranch(branchOptions[0] ?? null);
@@ -322,7 +260,6 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
     setToDate(TODAY);
     setPostStatus(postStatusOptions[0]);
     setPrintZeroBalance(yesNoOptions[0]);
-    setReportFile("Excel");
     setPreview(null);
     onClose?.();
   };
@@ -355,67 +292,17 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
     <ReportForm
       title="Payables"
       overlay={
-        // Print preview
+        // the Print Preview (after Print)
         preview && (
-          <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/40 p-4">
-            <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
-              <Header Name="Print Preview" />
-
-              <iframe
-                title="Print Preview"
-                srcDoc={previewHtml}
-                className="min-h-0 flex-1 border-0 bg-white"
-              />
-
-              <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
-                <div className="flex gap-3">
-                  <button
-                    id="btnPreviewPrint"
-                    type="button"
-                    onClick={handlePreviewPrint}
-                    disabled={printing}
-                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <u>P</u>rint
-                  </button>
-                  <button
-                    id="btnPreviewOk"
-                    type="button"
-                    autoFocus
-                    onClick={handlePreviewOk}
-                    disabled={printing}
-                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <u>D</u>ownload
-                  </button>
-                </div>
-
-                {/* Report File: what Download saves */}
-                <div
-                  id="rdgReportFile"
-                  className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-3.5 py-2.5"
-                >
-                  <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                    Report File
-                  </span>
-                  <CustomRadio
-                    name="rdgReportFile"
-                    value="Excel"
-                    label="Excel"
-                    checked={reportFile === "Excel"}
-                    onChange={() => setReportFile("Excel")}
-                  />
-                  <CustomRadio
-                    name="rdgReportFile"
-                    value="PDF"
-                    label="PDF"
-                    checked={reportFile === "PDF"}
-                    onChange={() => setReportFile("PDF")}
-                  />
-                </div>
-              </footer>
-            </div>
-          </div>
+          <ReportPreview
+            showClose={false}
+            html={buildHtml(preview.report)}
+            fileBase={preview.fileBase}
+            onPrint={() => printPayablesReport(preview.report)}
+            buildPdf={() => buildPayablesPdf(preview.report)}
+            fetchExcel={() => fetchExcel(preview.request)}
+            onClose={() => setPreview(null)}
+          />
         )
       }
     >

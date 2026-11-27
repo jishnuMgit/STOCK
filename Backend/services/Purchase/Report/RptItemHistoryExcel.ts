@@ -68,17 +68,17 @@ export const buildItemHistoryWorkbook = async (
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells("A1:H1");
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = levelFont("company", true, "inter");
+  ws.getCell("A1").font = levelFont("company", true);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:H2");
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = levelFont("heading", false, "inter");
+  ws.getCell("A2").font = levelFont("heading", false);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   ws.mergeCells("A3:H3");
   ws.getCell("A3").value = report.branch;
-  setPrintedFooter(ws, report.reportInfo, "inter"); // the user and the time: bottom right of every printed page
+  setPrintedFooter(ws, report.reportInfo); // the user and the time: bottom right of every printed page
 
   // the colon of the header block, written by the number format of the value: ": " in front of the value, which stays
   // a real number / text (an empty value still shows the colon)
@@ -140,7 +140,7 @@ export const buildItemHistoryWorkbook = async (
       "Qty. In", "Qty. Out", "Unit Cost", "Unit Price",
     ]);
     head.eachCell((c, col) => {
-      c.font = levelFont("columnHead", true, "inter");
+      c.font = levelFont("columnHead", true);
       c.border = thin;
       c.alignment = { horizontal: col >= 5 ? "right" : "left" };
     });
@@ -178,7 +178,7 @@ export const buildItemHistoryWorkbook = async (
   }
 
   // the whole sheet in the font of the shared look (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

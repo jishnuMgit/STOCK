@@ -25,7 +25,7 @@ import {
   buildHtml,
   printStockTransferReport,
   type PrintReport,
-} from "../../../../components/Transaction/StockTransfer/RptStockTransferPrint";
+} from "../../../../components/Transaction/StockTransfer/RptStockTransfer";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";

@@ -393,6 +393,7 @@ export const PairFilter: React.FC<{
             firstWidth={firstWidth}
             secondWidth={secondWidth}
             gap={FILTER_GAP}
+            nameDividerAtBoxEnd // the Name list's ID column starts exactly where the Name box ends (no gap)
             menuZIndex={999999}
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             headerFontSize="12px"
