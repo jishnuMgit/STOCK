@@ -1566,7 +1566,7 @@ const BeginningStockPage: React.FC = () => {
 
         {/* FORM BODY - 12px round it, but nothing extra above the Branch row (as
           the Sales Invoice page: the Branch box is ~12px under the title bar) */}
-        <div className="m-[12px] flex min-h-0 flex-1 flex-col pt-0">
+        <div className="pt-3 pb-6 px-3 flex min-h-0 flex-1 flex-col ">
 
           {/* HEADER FORM */}
           <section className="mb-3 flex h-[30px] bg-white shrink-0 items-center justify-between gap-8">
@@ -1662,22 +1662,22 @@ const BeginningStockPage: React.FC = () => {
                     <th className="border border-[#bfe8d0] px-1 text-center font-medium">
                       Line
                     </th>
-                    <th className="border border-[#bfe8d0] px-2 font-medium">
+                    <th className="border border-[#bfe8d0] px-[2px] font-medium">
                       Item ID
                     </th>
-                    <th className="border border-[#bfe8d0] px-2 font-medium">
+                    <th className="border border-[#bfe8d0] px-[2px] font-medium">
                       Item Name
                     </th>
-                    <th className="border border-[#bfe8d0] px-2 font-medium">
+                    <th className="border border-[#bfe8d0] px-[2px] font-medium">
                       Unit
                     </th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">
+                    <th className="border border-[#bfe8d0] px-[2px] text-right font-medium">
                       Qty.
                     </th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">
+                    <th className="border border-[#bfe8d0] px-[2px] text-right font-medium">
                       Unit Cost
                     </th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">
+                    <th className="border border-[#bfe8d0] px-[2px] text-right font-medium">
                       Total Cost
                     </th>
                   </tr>
@@ -1795,7 +1795,7 @@ const BeginningStockPage: React.FC = () => {
                           onKeyDown={(event) =>
                             handleTableKeyDown(event, index, "txtUnit")
                           }
-                          className="h-[26px] w-full bg-transparent px-2 outline-none focus:bg-[#f1f8ff]"
+                          className="h-[26px] w-full bg-transparent px-[2px] outline-none focus:bg-[#f1f8ff]"
                         />
                       </td>
 
@@ -1819,7 +1819,7 @@ const BeginningStockPage: React.FC = () => {
                           onKeyDown={(event) =>
                             handleTableKeyDown(event, index, "txtQty")
                           }
-                          className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
+                          className="number-no-spinner h-[26px] w-full bg-transparent px-[2px] text-right outline-none focus:bg-[#f1f8ff]"
                         />
                       </td>
 
@@ -1847,7 +1847,7 @@ const BeginningStockPage: React.FC = () => {
                           onKeyDown={(event) =>
                             handleTableKeyDown(event, index, "txtUnitCost")
                           }
-                          className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
+                          className="number-no-spinner h-[26px] w-full bg-transparent px-[2px] text-right outline-none focus:bg-[#f1f8ff]"
                         />
                       </td>
 
@@ -1863,7 +1863,7 @@ const BeginningStockPage: React.FC = () => {
                                 : ""
                             }
                             readOnly
-                            className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right outline-none"
+                            className="h-[26px] min-w-0 flex-1 bg-transparent px-[2px] text-right outline-none"
                           />
 
                           {/* the slot is always there so the amounts do not move when the x shows */}
@@ -1950,7 +1950,7 @@ const BeginningStockPage: React.FC = () => {
                         name="txtTotalQty"
                         value={formatQty(totalQty)}
                         readOnly
-                        className="h-7.5 w-full min-w-0 rounded border border-gray-300 bg-white px-2 text-right text-[14px] text-[#344054] outline-none"
+                        className="h-7.5 w-full min-w-0 rounded border border-gray-300 bg-white px-[2px] text-right text-[14px] text-[#344054] outline-none"
                       />
                     </td>
 
@@ -1964,7 +1964,7 @@ const BeginningStockPage: React.FC = () => {
                         name="txtTotalCost"
                         value={formatAmount(total)}
                         readOnly
-                        className="h-7.5 w-full min-w-0 rounded border border-gray-300 bg-white px-2 text-right text-[14px] text-[#344054] outline-none"
+                        className="h-7.5 w-full min-w-0 rounded border border-gray-300 bg-white px-[2px] text-right text-[14px] text-[#344054] outline-none"
                       />
                     </td>
                   </tr>

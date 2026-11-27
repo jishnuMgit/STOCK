@@ -927,7 +927,7 @@ const ItemPage: React.FC = () => {
               FORM
           =================================================== */}
 
-            <div className="p-3 m-3">
+            <div className="p-3 mb-3">
               {/* =================================================
                 ITEM ID
             ================================================= */}
@@ -1393,7 +1393,7 @@ const ItemPage: React.FC = () => {
                         w-[28%]
                         border
                         border-slate-300
-                        px-2
+                       px-[2px]
                         text-left
                         font-normal
                       "
@@ -1414,7 +1414,7 @@ const ItemPage: React.FC = () => {
                         w-[32%]
                         border
                         border-slate-300
-                        px-2
+                       px-[2px]
                         text-left
                         font-normal
                       "
@@ -1431,7 +1431,7 @@ const ItemPage: React.FC = () => {
                         w-[24%]
                         border
                         border-slate-300
-                        px-2
+                       px-[2px]
                         text-center
                         font-normal
                         whitespace-nowrap
@@ -1449,7 +1449,7 @@ const ItemPage: React.FC = () => {
                         w-[16%]
                         border
                         border-slate-300
-                        px-2
+                       px-[2px]
                         text-center
                         font-normal
                         whitespace-nowrap
@@ -1569,7 +1569,7 @@ const ItemPage: React.FC = () => {
                             onChange={(e) =>
                               updateRow(row.id, "txtItemLocation", e.target.value)
                             }
-                            className="h-6.75 w-full border-0 px-2 text-[11px] outline-none"
+                            className="h-6.75 w-full border-0px-[2px] text-[11px] outline-none"
                           />
                         </td>
 
