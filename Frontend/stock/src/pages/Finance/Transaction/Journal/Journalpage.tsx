@@ -28,6 +28,7 @@ import {
   type Branch,
   type JournalType,
 } from "../../../../hooks/useJournal";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 /* =========================================================
@@ -54,21 +55,21 @@ const todayDDMMYYYY = (): string => {
   const day = String(today.getDate()).padStart(2, "0");
   const month = String(today.getMonth() + 1).padStart(2, "0");
 
-  return `${day}/${month}/${today.getFullYear()}`;
+  return `${day}-${month}-${today.getFullYear()}`;
 };
 
-/* DD/MM/YYYY -> YYYY-MM-DD (what useJournal / the API expects) */
+/* DD-MM-YYYY -> YYYY-MM-DD (what useJournal / the API expects) */
 const toIsoDate = (value: string): string => {
-  const [day, month, year] = value.split("/");
+  const [day, month, year] = value.split("-");
 
   return day && month && year ? `${year}-${month}-${day}` : "";
 };
 
-/* YYYY-MM-DD -> DD/MM/YYYY */
+/* YYYY-MM-DD -> DD-MM-YYYY */
 const fromIsoDate = (value: string): string => {
   const [year, month, day] = value.split("-");
 
-  return year && month && day ? `${day}/${month}/${year}` : "";
+  return year && month && day ? `${day}-${month}-${year}` : "";
 };
 
 const round2 = (value: number): number =>
@@ -102,6 +103,8 @@ const JournalPage: React.FC = () => {
     fetchLookups,
     fetchJournal,
     saveJournal,
+    postJournal,
+    deleteJournal,
   } = useJournal();
 
   /* =======================================================
@@ -126,6 +129,9 @@ const JournalPage: React.FC = () => {
   /* true when the typed journal no. was loaded from the database */
   const [isExisting, setIsExisting] = useState(false);
 
+  /* true when the loaded journal is already posted */
+  const [isPosted, setIsPosted] = useState(false);
+
   /* journal number loading + manual refresh (after save / clear) */
   const [journalNoLoading, setJournalNoLoading] = useState(false);
   const [docNoRefresh, setDocNoRefresh] = useState(0);
@@ -139,6 +145,7 @@ const JournalPage: React.FC = () => {
   const defaultBranchRef = useRef("");
   const defaultTypeRef = useRef("");
 
+  const { confirm, dialog: confirmDialog } = useConfirmModal();
   const { notify, dialog: messageDialog } = useMessageModal("Journal");
 
   /* =======================================================
@@ -231,6 +238,7 @@ const JournalPage: React.FC = () => {
 
   useEffect(() => {
     setIsExisting(false);
+    setIsPosted(false);
 
     if (!branch || !type) {
       setJournalNo("");
@@ -315,6 +323,7 @@ const JournalPage: React.FC = () => {
   const handleJournalNoChange = useCallback((value: string) => {
     setJournalNo(value);
     setIsExisting(false);
+    setIsPosted(false);
   }, []);
 
   const handleJournalNoEnter = useCallback(async () => {
@@ -330,6 +339,7 @@ const JournalPage: React.FC = () => {
     /* not found = new journal */
     if (!result) {
       setIsExisting(false);
+      setIsPosted(false);
       dateRef.current?.focus();
       return;
     }
@@ -357,6 +367,7 @@ const JournalPage: React.FC = () => {
     setJournalDate(fromIsoDate(result.header.date));
     setNote(result.header.note);
     setIsExisting(true);
+    setIsPosted(result.posted);
 
     focusTableField(0, "accountId");
   }, [branch, journalNo, fetchJournal, accountOptions, focusTableField]);
@@ -599,6 +610,7 @@ const JournalPage: React.FC = () => {
     setActiveDescriptionRow(null);
     setRows(createRows());
     setIsExisting(false);
+    setIsPosted(false);
     setDocNoRefresh((count) => count + 1);
 
     requestAnimationFrame(() => {
@@ -644,7 +656,7 @@ const JournalPage: React.FC = () => {
         })),
       });
 
-      notify.success(isExisting ? "Modified" : "Saved");
+      notify.success(isExisting ? "Modified Successfully" : "Saved Successfully");
 
       clearForm();
     } catch (error: unknown) {
@@ -662,6 +674,104 @@ const JournalPage: React.FC = () => {
     journalDate,
     note,
     rows,
+    clearForm,
+  ]);
+
+  /* =======================================================
+     POST JOURNAL (VB cmdPost_Click)
+  ======================================================= */
+
+  const handlePost = useCallback(async () => {
+    if (saving) {
+      return;
+    }
+
+    if (!branch) {
+      notify.error("Please select a 'Branch'");
+      return;
+    }
+
+    if (!journalNo.trim()) {
+      notify.error("Please input 'Journal No.'");
+      return;
+    }
+
+    if (!journalDate) {
+      notify.error("Please select 'Date'");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await postJournal(branch, journalNo.trim());
+
+      notify.success("Document posted");
+
+      clearForm();
+    } catch (error: unknown) {
+      notify.error(error instanceof Error ? error.message : "Not posted, try again");
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, branch, journalNo, journalDate, postJournal, clearForm]);
+
+  /* =======================================================
+   DELETE JOURNAL (VB cmdDelete_Click)
+======================================================= */
+
+  const handleDelete = useCallback(async () => {
+    if (saving) {
+      return;
+    }
+
+    if (!branch || !journalNo.trim()) {
+      notify.error("Please input 'Journal No.'");
+      return;
+    }
+
+    if (!isExisting) {
+      notify.error("This journal is not saved");
+      return;
+    }
+
+    if (isPosted) {
+      notify.error("Posted document cannot be deleted");
+      return;
+    }
+
+    const shouldDelete = await confirm({
+      title: "Journal",
+      message: "Do you want to Delete?",
+      confirmLabel: "Yes",
+      cancelLabel: "No",
+    });
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await deleteJournal(branch, journalNo.trim());
+
+      notify.success("Deleted Successfully");
+
+      clearForm();
+    } catch (error: unknown) {
+      notify.error(error instanceof Error ? error.message : "Not deleted, try again");
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    saving,
+    branch,
+    journalNo,
+    isExisting,
+    isPosted,
+    confirm,
+    deleteJournal,
     clearForm,
   ]);
 
@@ -760,9 +870,14 @@ const JournalPage: React.FC = () => {
             ref={actionsRef}
             clearForm={clearForm}
             onSave={handleSave}
+            onDelete={handleDelete}
+            onPost={handlePost}
+            isPosted={isPosted}
+            saveLabel={isExisting ? "Modify" : "Save"}
           />
         </div>
       </div>
+      {confirmDialog}
       {messageDialog}
     </div>
   );

@@ -435,7 +435,7 @@ const BranchPage: React.FC = () => {
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Branch" />
 
-          <section className="px-3.5 pb-6 pt-3">
+          <section className="px-3 pb-3 ">
             {/* Company (the logged-in company, read-only) */}
             {/* <div className="flex items-center gap-3"> */}
               {/* <div className="flex h-[30px] w-[110px] items-center justify-end border border-[#BFE8D0] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">

@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import pool from "../../../../DB/db.js";
 
 import type { ReceiptContext } from "../../../../middleware/receiptContext.js";
+import { applyDocumentPosting } from "../../../../utils/ApplyDocumentPosting.js";
 
 /* =========================================================
    TYPES  (can be moved to ../types/types.ts)
@@ -377,11 +378,33 @@ async function insertLines(
 
 /* =========================================================
    JOURNAL TYPES
-   Journal has a single doc type: JV.
+   dbo.filllookupjvfinparam -> tblfinparam (fptype = 'ATYPE')
 ========================================================= */
 
-export function getJournalTypesService(): { fpid: string; fpname: string }[] {
-    return [{ fpid: JOURNAL_DOC_TYPE, fpname: "Journal" }];
+export async function getJournalTypesService(
+    ctx: ReceiptContext,
+): Promise<{ fpid: string; fpname: string }[]> {
+    const client = await pool.connect();
+
+    try {
+        if (isEmpty(ctx.pstrCoID)) {
+            throw new JournalError("Company ID is required");
+        }
+
+        const result = await client.query(
+            `SELECT fpid, fpname
+               FROM dbo.filllookupjvfinparam($1::varchar)`,
+            [ctx.pstrCoID],
+        );
+
+        return result.rows;
+    } catch (error: unknown) {
+        console.error("getJournalTypesService error:", error);
+
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 /* =========================================================
@@ -450,7 +473,7 @@ export async function saveJournalService(
         await client.query("COMMIT");
 
         return {
-            message: "Saved",
+            message: "Saved successfully",
 
             data: {
                 pstrCoID,
@@ -543,7 +566,7 @@ export async function updateJournalService(
         await client.query("COMMIT");
 
         return {
-            message: "Modified",
+            message: "Modified successfully",
 
             data: {
                 pstrCoID,
@@ -571,6 +594,75 @@ export async function updateJournalService(
         }
 
         console.error("updateJournalService error:", error);
+
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+/* =========================================================
+   POST JOURNAL  (VB cmdPost_Click -> objFinDocPost.Apply)
+========================================================= */
+
+export async function postJournalService(
+    key: JournalKey,
+    ctx: ReceiptContext,
+): Promise<ServiceResult> {
+    const client = await pool.connect();
+
+    const { pstrCoID, pstrYear, pstrUserID } = ctx;
+
+    try {
+        if (isEmpty(key.lkpBranch)) {
+            throw new JournalError("Branch is required");
+        }
+
+        if (isEmpty(key.txtDocNo)) {
+            throw new JournalError("Document number is required");
+        }
+
+        /* VB: IsDocNoExist("tblFinTrans") */
+        const header = await fetchHeader(client, ctx, key);
+
+        if (!header) {
+            throw new JournalError("This document is not saved", 404);
+        }
+
+        const [year, month, day] = String(header.fdate).substring(0, 10).split("-");
+
+        const dtpDate = `${day}-${month}-${year}`;
+
+        const result = await applyDocumentPosting(
+            pstrCoID,
+            pstrYear,
+            key.lkpBranch,
+            JOURNAL_DOC_TYPE,
+            0,
+            key.txtDocNo,
+            dtpDate,
+            pstrUserID,
+        );
+
+        return {
+            message: "Posted successfully",
+
+            data: {
+                pstrCoID,
+
+                pstrYear,
+
+                lkpBranch: key.lkpBranch,
+
+                strDocType: JOURNAL_DOC_TYPE,
+
+                txtDocNo: key.txtDocNo,
+
+                intDocPostCount: result.intDocPostCount,
+            },
+        };
+    } catch (error: unknown) {
+        console.error("postJournalService error:", error);
 
         throw error;
     } finally {
@@ -630,7 +722,7 @@ export async function deleteJournalService(
         await client.query("COMMIT");
 
         return {
-            message: "Journal deleted successfully",
+            message: "Deleted successfully",
 
             data: {
                 pstrCoID,

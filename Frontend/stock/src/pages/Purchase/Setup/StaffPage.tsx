@@ -699,7 +699,7 @@ const StaffPage: React.FC = () => {
             FORM
         ==================================================== */}
 
-          <div className="p-[12px] m-[12px]">
+          <div className="p-[12px] mb-[12px]">
             {/* TABLE AREA */}
 
             <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
