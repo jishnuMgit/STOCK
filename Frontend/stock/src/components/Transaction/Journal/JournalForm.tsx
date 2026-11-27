@@ -405,16 +405,16 @@ const JournalForm: React.FC<JournalFormProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               value={
-                journalDate ? dayjs(journalDate, "DD/MM/YYYY") : null
+                journalDate ? dayjs(journalDate, "DD-MM-YYYY") : null
               }
               onChange={(newValue) => {
                 if (newValue?.isValid()) {
-                  setJournalDate(newValue.format("DD/MM/YYYY"));
+                  setJournalDate(newValue.format("DD-MM-YYYY"));
                 } else {
                   setJournalDate("");
                 }
               }}
-              format="DD/MM/YYYY"
+              format="DD-MM-YYYY"
               inputRef={dateRef}
               slotProps={{
                 textField: {

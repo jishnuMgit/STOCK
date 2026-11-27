@@ -55,21 +55,21 @@ const todayDDMMYYYY = (): string => {
   const day = String(today.getDate()).padStart(2, "0");
   const month = String(today.getMonth() + 1).padStart(2, "0");
 
-  return `${day}/${month}/${today.getFullYear()}`;
+  return `${day}-${month}-${today.getFullYear()}`;
 };
 
-/* DD/MM/YYYY -> YYYY-MM-DD (what useJournal / the API expects) */
+/* DD-MM-YYYY -> YYYY-MM-DD (what useJournal / the API expects) */
 const toIsoDate = (value: string): string => {
-  const [day, month, year] = value.split("/");
+  const [day, month, year] = value.split("-");
 
   return day && month && year ? `${year}-${month}-${day}` : "";
 };
 
-/* YYYY-MM-DD -> DD/MM/YYYY */
+/* YYYY-MM-DD -> DD-MM-YYYY */
 const fromIsoDate = (value: string): string => {
   const [year, month, day] = value.split("-");
 
-  return year && month && day ? `${day}/${month}/${year}` : "";
+  return year && month && day ? `${day}-${month}-${year}` : "";
 };
 
 const round2 = (value: number): number =>
@@ -656,7 +656,7 @@ const JournalPage: React.FC = () => {
         })),
       });
 
-      notify.success(isExisting ? "Modified successfully" : "Saved successfully");
+      notify.success(isExisting ? "Modified Successfully" : "Saved Successfully");
 
       clearForm();
     } catch (error: unknown) {
@@ -756,7 +756,7 @@ const JournalPage: React.FC = () => {
 
       await deleteJournal(branch, journalNo.trim());
 
-      notify.success("Deleted successfully");
+      notify.success("Deleted Successfully");
 
       clearForm();
     } catch (error: unknown) {
