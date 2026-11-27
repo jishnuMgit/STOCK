@@ -119,7 +119,7 @@ export const cleanReceiptPayload = (body: any): ReceiptData => {
 
     dtpDate: body?.dtpDate,
 
-    txtReceivedFrom: body?.receivedFrom,
+    txtReceivedFrom: body?.receivedFrom ?? body?.paidTo,
 
     txtReference: body?.reference,
 

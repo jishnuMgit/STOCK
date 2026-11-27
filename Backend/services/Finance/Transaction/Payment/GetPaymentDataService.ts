@@ -23,7 +23,7 @@ interface PaymentHeader {
   dtpDate: any;
   cbAccountName: any;
   CCID: any;
-  receivedFrom: any;
+  paidTo: any;
   reference: any;
   note: any;
   DivID: any;
@@ -252,7 +252,7 @@ export async function GetPaymentData(
     dtpDate: dbHeader.fdate ?? null, // already DD/MM/YYYY string
     cbAccountName: dbHeader.fcbaccountid ?? "",
     CCID: dbHeader.fccid ?? "",
-    receivedFrom: dbHeader.freceivedfrompaidto ?? "",
+    paidTo: dbHeader.freceivedfrompaidto ?? "",
     reference: dbHeader.freference ?? "",
     note: dbHeader.fnote ?? "",
     DivID: dbHeader.fdivid ?? "",
