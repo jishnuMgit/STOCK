@@ -363,18 +363,18 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
             }
 
             // numbers only + max length (B2B only)
-            const numericChecks: [string, string, number][] = [
-                ["Building No", txtBuildingNo, 4],
-                ["Postal Code", txtPostalCode, 5],
-                ["Additional No", txtAdditionalNo, 4],
-                ["CR No", txtCRNo, 20],
-                ["VAT No", txtVATNo, 15],
-                ["Building No (AR)", txtBuildingNo_AR, 4],
-                ["Postal Code (AR)", txtPostalCode_AR, 5],
-                ["Additional No (AR)", txtAdditionalNo_AR, 4],
-                ["CR No (AR)", txtCRNo_AR, 20],
-                ["VAT No (AR)", txtVATNo_AR, 15],
-            ];
+            // const numericChecks: [string, string, number][] = [
+            //     ["Building No", txtBuildingNo, 4],
+            //     ["Postal Code", txtPostalCode, 5],
+            //     ["Additional No", txtAdditionalNo, 4],
+            //     ["CR No", txtCRNo, 20],
+            //     ["VAT No", txtVATNo, 15],
+            //     ["Building No (AR)", txtBuildingNo_AR, 4],
+            //     ["Postal Code (AR)", txtPostalCode_AR, 5],
+            //     ["Additional No (AR)", txtAdditionalNo_AR, 4],
+            //     ["CR No (AR)", txtCRNo_AR, 20],
+            //     ["VAT No (AR)", txtVATNo_AR, 15],
+            // ];
 
             // for (const [label, value, max] of numericChecks) {
             //     if (value && !/^\d+$/.test(value)) {

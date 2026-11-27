@@ -12,6 +12,7 @@ import {
     saveJournalService,
     updateJournalService,
     deleteJournalService,
+    postJournalService,
 } from "../../../../services/Finance/Transaction/Journal/JournalService.js";
 
 /* TODO: use the same way the receipt controller reads the context
@@ -73,9 +74,9 @@ export async function getJournalLookups(_req: Request, res: Response) {
 export async function getJournalDocNo(req: Request, res: Response) {
     try {
         const { pstrCoID, pstrYear } = getCtx(res);
-        
+
         const brId = String(req.query.brId ?? "").trim();
-        
+
         if (!brId) {
             return res
                 .status(400)
@@ -104,9 +105,9 @@ export async function getJournalDocNo(req: Request, res: Response) {
 /* GET /api/journal/types */
 export async function getJournalTypes(_req: Request, res: Response) {
     try {
-        return res
-            .status(200)
-            .json({ success: true, data: getJournalTypesService() });
+        const data = await getJournalTypesService(getCtx(res));
+
+        return res.status(200).json({ success: true, data });
     } catch (error: unknown) {
         return handleError(res, error, "Failed to load journal types");
     }
@@ -147,6 +148,22 @@ export async function updateJournal(req: Request, res: Response) {
         return res.status(200).json({ success: true, ...result });
     } catch (error: unknown) {
         return handleError(res, error, "Failed to modify journal");
+    }
+}
+
+/* POST /api/journal/post */
+export async function postJournal(req: Request, res: Response) {
+    try {
+        const { lkpBranch, txtDocNo } = req.body;
+
+        const result = await postJournalService(
+            { lkpBranch, txtDocNo },
+            getCtx(res),
+        );
+
+        return res.status(200).json({ success: true, ...result });
+    } catch (error: unknown) {
+        return handleError(res, error, "Failed to post journal");
     }
 }
 

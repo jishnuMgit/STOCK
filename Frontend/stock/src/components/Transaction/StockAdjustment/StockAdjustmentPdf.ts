@@ -7,7 +7,14 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
-import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../common/reportPdf";
+import {
+  STOCK_DOCUMENT_PDF,
+  addStockDocumentPageNumbers,
+  drawNoteAfterTotal,
+  drawStockInfoLine,
+  registerReportPdfFont,
+  stockDocumentTable,
+} from "../../common/reportPdf";
 import { REPORT_STYLE } from "../../common/reportStyle";
 
 import {
@@ -17,7 +24,7 @@ import {
   formatQty,
   totalsOf,
   type PrintReport,
-} from "./StockAdjustmentPrintReport";
+} from "./RptStockAdjustmentPrint";
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };
@@ -27,30 +34,33 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
   const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
-  // below company / heading / the Branch line (and the note)
-  const tableTop = MARGIN.top + (report.txtNote ? 36 : 30) + REPORT_STYLE.pdf.titleGap + REPORT_STYLE.pdf.tableGap;
+  // below company / heading / the info line (the note is after the Total row, not here)
+  // SPACE_AFTER_HEADING: the room under "Stock Adjustment" for the line of "Page x of y" (the info line and the table move down with it)
+  const SPACE_AFTER_HEADING = 3;
+  const tableTop = MARGIN.top + 30 + SPACE_AFTER_HEADING + REPORT_STYLE.pdf.titleGap + REPORT_STYLE.pdf.tableGap - 4.5; // 4.5 mm: the info line is 25 px high, as in the preview
 
-  // Sl.# | Item ID | Item Name (the rest) | Unit | Qty. In | Qty. Out | Unit Cost | Total Cost
-  const slW = 14;
+  // Line | Item ID | Item Name (the rest) | Unit | Qty. In | Qty. Out | Unit Cost | Total Cost
+  const slW = 10; // the Line column holds 4 digits (8888) with 0.8 mm of space on each side
   const idW = 38;
-  const unitW = 20;
-  const qtyW = 28;
+  const unitW = 16;
+  const qtyW = 24;
+  const unitCostW = 28;
   const costW = 34;
   const columnStyles = {
     0: { cellWidth: slW },
     1: { cellWidth: idW },
-    2: { cellWidth: usable - slW - idW - unitW - qtyW * 2 - costW * 2 },
+    2: { cellWidth: usable - slW - idW - unitW - qtyW * 2 - unitCostW - costW },
     3: { cellWidth: unitW },
     4: { cellWidth: qtyW, halign: "right" as const },
     5: { cellWidth: qtyW, halign: "right" as const },
-    6: { cellWidth: costW, halign: "right" as const },
+    6: { cellWidth: unitCostW, halign: "right" as const },
     7: { cellWidth: costW, halign: "right" as const },
   };
 
   const right = { halign: "right" as const };
 
   const body: CellDef[][] = report.rows.map((r) => [
-    { content: String(r.txtSlNo) },
+    { content: String(r.txtSlNo), styles: { halign: "center" as const } },
     { content: r.lkpItemID },
     { content: r.lkpItemName ?? "" },
     { content: r.txtUnit ?? "" },
@@ -81,16 +91,16 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
     doc.setFontSize(look.size.heading);
     doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15 + REPORT_STYLE.pdf.titleGap, { align: "center" });
 
-    doc.setFontSize(look.size.pdfBody);
-    const y = MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap;
-    doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, y);
-    // the Date is not at the right end: the right end of this line is "Page x of y", as on the reports
-    doc.text(`Entry No. : ${report.txtDocNo}`, MARGIN.left + (PAGE_W - MARGIN.left - MARGIN.right) * 0.28, y);
-    doc.text(`Date : ${formatDate(report.dtpDate)}`, MARGIN.left + (PAGE_W - MARGIN.left - MARGIN.right) * 0.56, y);
-
-    if (report.txtNote) {
-      doc.text(`Note : ${report.txtNote}`, MARGIN.left, y + 6);
-    }
+    // the info line (common/reportPdf.ts): Branch at the left, Entry No. in the middle, Date at the right end - 11 px, the entry number 14 px
+    drawStockInfoLine(doc, {
+      y: MARGIN.top + 23 + SPACE_AFTER_HEADING + REPORT_STYLE.pdf.titleGap,
+      left: MARGIN.left,
+      right: PAGE_W - MARGIN.right,
+      dateRight: PAGE_W - MARGIN.right - STOCK_DOCUMENT_PDF.shiftLeft,
+      branch: report.txtBranchName,
+      entryNo: report.txtDocNo,
+      date: formatDate(report.dtpDate),
+    });
   };
 
   autoTable(doc, {
@@ -105,12 +115,12 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: { ...pdfTableStyles(look), overflow: "ellipsize" as const },
-    headStyles: pdfHeadStyles(look),
+    // the stock document look (common/reportPdf.ts, STOCK_DOCUMENT_PDF): the cell space, the thin light lines drawn once
+    ...stockDocumentTable(look),
     columnStyles,
     head: [
       [
-        { content: "Sl.#", styles: { halign: "left" as const } },
+        { content: "Line", styles: { halign: "center" as const } },
         { content: "Item ID", styles: { halign: "left" as const } },
         { content: "Item Name", styles: { halign: "left" as const } },
         { content: "Unit", styles: { halign: "left" as const } },
@@ -124,21 +134,17 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
     didDrawPage: drawTitle,
   });
 
-  // page numbers need the final page count, so they are added at the end
-  const pages = doc.getNumberOfPages();
-  doc.setFont(look.font, "normal");
-  doc.setFontSize(look.size.small);
-  doc.setTextColor(0, 0, 0);
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap, {
-      align: "right",
-    });
-    doc.text(`${report.txtSavedBy ? "Saved By" : "Printed"} : ${report.txtSavedBy || report.txtReportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
-      align: "right",
-    });
-  }
+  // the "Note :" line after the Total row (common/reportPdf.ts) - printed even when the note is empty
+  drawNoteAfterTotal(doc, look, report.txtNote, { x: MARGIN.left, width: usable, bottom: MARGIN.bottom, tableTop, drawTitle });
+
+  // "Page x of y" (on a line of its own under the heading) and the "Created By" line at the bottom right of every page (common/reportPdf.ts)
+  addStockDocumentPageNumbers(doc, look, {
+    right: PAGE_W - MARGIN.right,
+    pageRight: PAGE_W - MARGIN.right - STOCK_DOCUMENT_PDF.shiftLeft,
+    pageY: MARGIN.top + 20 + REPORT_STYLE.pdf.titleGap,
+    bottomY: MARGIN.bottom - 6,
+    footer: `${report.txtSavedBy ? "Created By" : "Printed"} : ${report.txtSavedBy || report.txtReportInfo}`,
+  });
 
   return doc.output("blob");
 };

@@ -20,7 +20,7 @@ type Props = {
   txtDifference: string;
   // the total debit and the total credit differ
   chkDifferent: boolean;
-  // "Saved By : X date" / "Last Modified By : Y date", as the old form showed
+  // "Created By : X date" / "Last Modified By : Y date", as the old form showed
   txtUserInfo: string;
   // the branch has a balance: the button says Modify, not Save
   chkSaved: boolean;
@@ -171,7 +171,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
       {txtUserInfo !== "" && (
         <table className="absolute right-[82px] top-[84px] border-collapse text-left text-[12px] text-gray-500">
           <tbody>
-            {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+            {/* one row per line ("Created By : ..." / "Last Modified By : ..."), in
                 three columns - label, colon, text - so the colons line up */}
             {txtUserInfo.split("\n").map((line) => {
               const [label, ...rest] = line.split(" : ");

@@ -322,6 +322,17 @@ export const useJournal = () => {
         [],
     );
 
+    /* VB cmdPost: posts an already saved journal */
+    const postJournal = useCallback(
+        async (brId: string, docNo: string): Promise<void> => {
+            await apiRequest("POST", `${JOURNAL_BASE}/post`, {
+                lkpBranch: brId,
+                txtDocNo: docNo,
+            });
+        },
+        [],
+    );
+
     return {
         fetchDefaultBranch,
         fetchBranches,
@@ -331,6 +342,7 @@ export const useJournal = () => {
         fetchJournal,
         saveJournal,
         deleteJournal,
+        postJournal,
         loading,
         error,
     };

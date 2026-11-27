@@ -424,7 +424,7 @@ export const DeletePayment = async (
 
         const dtpDate = paymentData?.header?.dtpDate ?? "";
         const cbAccountName = paymentData?.header?.cbAccountName ?? "";
-        const paidTo = paymentData?.header?.receivedFrom ?? "";
+        const paidTo = paymentData?.header?.paidTo ?? "";
         const totalDebit = Number(paymentData?.total ?? 0);
 
         const gstrUserAuditNote =

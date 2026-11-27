@@ -18,7 +18,7 @@ export type PrintHeader = {
   txtDocNo: string;
   dtpDate: string | null;
   txtNote: string | null;
-  // "<user>  dd/mm/yyyy hh:mm" of the save - bottom right of every page, after "Saved By :"
+  // "<user>  dd/mm/yyyy hh:mm" of the save - bottom right of every page, after "Created By :"
   txtSavedBy?: string;
   // "<user>  dd/mm/yyyy hh:mm" of the print (used when the document has no saved-by) - bottom right of every page
   txtReportInfo: string;
@@ -38,6 +38,10 @@ export type PrintLine = {
 export type PrintReport = PrintHeader & { rows: PrintLine[] };
 
 export const REPORT_HEADING = "Stock Transfer";
+
+// Transfer To is on the second info line only. Its side: "left" (under Branch) or "right" (at the right end). One word to change -
+// the preview, the printed page and the PDF all follow it.
+export const TRANSFER_TO_SIDE: "left" | "right" = "left";
 
 // Qty with 3 decimals, Unit Cost and Total Cost with 4 (the columns)
 export const formatQty = (value: number) =>
@@ -82,46 +86,34 @@ export const buildHtml = (r: PrintReport) => {
   look: "inter",
   orientation: "landscape",
   margin: "12mm 10mm 14mm 15mm",
-  // the bottom right of every page: "Saved By : <user> <time of the save>" (the print's own user and time when none is saved)
+  // the space left and right inside a cell: 5 px (the common one is 8 px)
+  cellPaddingX: 0,
+  // the bottom right of every page: "Created By : <user> <time of the save>" (the print's own user and time when none is saved)
   reportInfo: cssStr(r.txtSavedBy || r.txtReportInfo),
-  infoLabel: r.txtSavedBy ? "Saved By" : "Printed",
-  // "Page x of y" and "Printed : ..." are 11 px
-  smallSize: "11px",
-  // the line under the heading (Branch, Entry No., Date, Transfer To): 11 px, except the Entry No. itself (JD-2600001): 14 px
-  extra: `.info { font-size: 11px; height: 26px; } .info .entry b { font-size: 14px; } /* the height is the space between the Branch line and the table (the common one is 32 px) */
-  th { font-size: 11px; } /* the column headings are 11 px, the same as the rows */
-  tr.note td { padding: 10px 0 0 0; white-space: pre-wrap; } /* the "Note :" line after the Total row, at the left side - printed even when the note is empty */
-  td.u { white-space: nowrap; padding: 0 4px; } /* a unit (NOS.) is never split over two lines, even in a narrow column */
-  td.c { text-align: center; } /* the line numbers are in the middle of their column */
-  /* the table lines of this print only: lighter (#e2e8f2) than the common #c7d1e4. They stay a whole 1 px: a fraction of a pixel is
-     drawn thicker on some lines and thinner on others (the line between Line and Item ID), so every line must be the same */
-  th { border-color: #e2e8f2; }
-  td { border-color: #e2e8f2; }
-  tr.tot td { border-top: 1px solid #e2e8f2; }
-  tr.note td { border: 0; }
-  .info, .pagerow, .co, .head { border: 0; }
-  .pagerow { height: 20px; } /* the line of its own for "Page x of y", between "Stock Transfer" and the Branch line */`,
+  infoLabel: r.txtSavedBy ? "Created By" : "Printed",
+  // the stock document look (common/reportStyle.ts, STOCK_DOCUMENT_CSS): the 11 px text, the line colour and the row spaces
+  stockLook: true,
 })}
 </style>
 </head>
 <body>
 <table>
   <colgroup>
-    <col style="width:6%" /><col style="width:14%" /><col style="width:42%" />
-    <col style="width:4%" /><col style="width:8%" /><col style="width:7%" />
+    <col style="width:3.6%" /><col style="width:14%" /><col style="width:44.1%" />
+    <col style="width:4%" /><col style="width:6%" /><col style="width:6%" />
     <col style="width:14%" />
   </colgroup>
   <thead>
     <tr><td colspan="7" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
     <tr><td colspan="7" class="head" style="border:0">${esc(REPORT_HEADING)}</td></tr>
     <tr><td colspan="7" class="pagerow" style="border:0"></td></tr>
-    <tr><td colspan="7" class="info" style="border:0"><div style="justify-content:flex-start;gap:2px 40px;flex-wrap:wrap">
-      <!-- the Date is not at the right end: the right end of this line is "Page x of y", as on the reports -->
+    <tr><td colspan="7" class="info" style="border:0;height:20px"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline">
+      <!-- Branch at the left, Entry No. in the middle, Date at the right end - then Transfer To at the left, under Branch, in the next row -->
       <span>Branch : <b>${esc(r.txtBranchName)}</b></span>
       <span class="entry">Entry No. : <b>${esc(r.txtDocNo)}</b></span>
-      <span>Date : <b>${esc(formatDate(r.dtpDate))}</b></span>
-      <span style="margin-left:auto">Transfer To : <b>${esc(r.txtToBranchName)}</b></span>
+      <span class="date">Date : <b>${esc(formatDate(r.dtpDate))}</b></span>
     </div></td></tr>
+    <tr><td colspan="7" class="info" style="border:0"><div style="display:block;text-align:${TRANSFER_TO_SIDE}">Transfer To : <b>${esc(r.txtToBranchName)}</b></div></td></tr>
     <tr>
       <th>Line</th><th>Item ID</th><th>Item Name</th><th>Unit</th>
       <th class="r">Qty.</th><th class="r">Unit Cost</th><th class="r">Total Cost</th>

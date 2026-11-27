@@ -15,7 +15,7 @@
 //
 // A report never writes a font name or a size: they all come from the look.
 import type { jsPDF } from "jspdf";
-import autoTable, { type CellDef, type UserOptions } from "jspdf-autotable";
+import autoTable, { type CellDef, type CellHookData, type UserOptions } from "jspdf-autotable";
 
 import { REPORT_STYLE, reportLook, type ReportLook, type ReportSizes } from "./reportStyle";
 
@@ -155,6 +155,136 @@ export const pdfHeadStyles = (look: PdfLook = CLASSIC) => ({
   fontStyle: "normal" as const,
   fontSize: pdfLabelFontSize(look),
 });
+
+// THE STOCK DOCUMENT LOOK for the PDF (the preview has the same look in reportStyle.ts: STOCK_DOCUMENT_CSS). A stock document PDF
+// (Stock Transfer first) takes its table from stockDocumentTable(look) and its note from drawNoteAfterTotal().
+export const STOCK_DOCUMENT_PDF = {
+  cellPaddingX: 1.3, // mm, left and right inside a cell (the common one is 2 mm)
+  lineCellPaddingX: 0.8, // mm, the first column (Line) is narrow: less space on each side
+  lineWidth: 0.1, // mm - the table lines are thin ...
+  lineColor: [226, 232, 242] as RGB, // ... and light (#e2e8f2)
+  infoSize: 8.25, // pt = 11 px, the line under the heading
+  entrySize: 12, // pt = 16 px, the Entry No. itself
+  shiftLeft: 4, // mm - the Date and "Page x of y" end this far to the left of the right edge of the table
+  footerSize: 6.75, // pt = 9 px, the "Created By : ..." line at the bottom right ("Page x of y" stays 11 px)
+};
+
+// the table options of a stock document: the styles, the column heading styles and didParseCell. Every line is drawn ONCE (a cell draws
+// only its right and bottom side; the first column also its left, the heading row its top) - when each cell drew all four sides, a
+// line shared by two cells was drawn twice and showed darker than the outer lines.
+export const stockDocumentTable = (
+  look: PdfLook = CLASSIC,
+  cellPaddingX: number = STOCK_DOCUMENT_PDF.cellPaddingX,
+  // the space in the first column: the narrow Line column has less (default); a document whose first column holds text passes `cellPaddingX`
+  lineCellPaddingX: number = STOCK_DOCUMENT_PDF.lineCellPaddingX
+) => {
+  const { lineWidth, lineColor } = STOCK_DOCUMENT_PDF;
+  const padding = REPORT_STYLE.pdf.cellPadding;
+
+  return {
+    styles: {
+      ...pdfTableStyles(look),
+      cellPadding: { top: padding, bottom: padding, left: cellPaddingX, right: cellPaddingX },
+      overflow: "ellipsize" as const,
+      lineWidth,
+      lineColor,
+    },
+    // the column headings are the size of the rows
+    headStyles: { ...pdfHeadStyles(look), fontSize: look.size.pdfBody, lineWidth, lineColor },
+    didParseCell: (hook: CellHookData) => {
+      const first = hook.column.index === 0;
+      if (first) hook.cell.styles.cellPadding = { top: padding, bottom: padding, left: lineCellPaddingX, right: lineCellPaddingX };
+      const topRow = hook.section === "head" && hook.row.index === 0;
+      hook.cell.styles.lineWidth = { top: topRow ? lineWidth : 0, right: lineWidth, bottom: lineWidth, left: first ? lineWidth : 0 };
+    },
+  };
+};
+
+// the "Note :" line after the Total row, at the left - printed even when the note is empty. It goes on a new page (with the title
+// drawn again, and the note at `tableTop`) when it does not fit under the table.
+export const drawNoteAfterTotal = (
+  doc: jsPDF,
+  look: PdfLook,
+  note: string | null | undefined,
+  where: { x: number; width: number; bottom: number; tableTop: number; drawTitle: () => void }
+) => {
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+  const noteLines = doc.splitTextToSize(`Note : ${note ?? ""}`.trimEnd() || "Note :", where.width) as string[];
+  let noteY = finalY + 7;
+
+  if (noteY + noteLines.length * 5 > doc.internal.pageSize.getHeight() - where.bottom) {
+    doc.addPage();
+    where.drawTitle();
+    noteY = where.tableTop;
+  }
+
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.pdfBody);
+  doc.setTextColor(0, 0, 0);
+  doc.text(noteLines, where.x, noteY);
+};
+
+// The info line of a stock document: Branch at the left, Entry No. in the middle of the page (the entry number itself bigger), Date at the
+// right end. A branch name can be up to 40 characters (30 are common): a Branch too long for the space before the Entry No. is cut
+// short with "...". `y` is the baseline; `left` and `right` are the edges of the table (mm).
+export const drawStockInfoLine = (
+  doc: jsPDF,
+  // dateRight: where the Date ends (default: the right edge of the table) - a little to the left of it when the page wants it
+  o: { y: number; left: number; right: number; dateRight?: number; branch: string; entryNo?: string; date: string }
+) => {
+  const { infoSize: small, entrySize: big } = STOCK_DOCUMENT_PDF;
+  const width = (text: string, size: number = small) => {
+    doc.setFontSize(size);
+    return doc.getTextWidth(text);
+  };
+  const cut = (text: string, max: number) => {
+    let out = text;
+    while (out.length > 1 && width(`${out}...`) > max) out = out.slice(0, -1);
+    return `${out}...`;
+  };
+
+  const entryLabel = "Entry No. : ";
+  const hasEntry = o.entryNo !== undefined;
+  const entryWidth = hasEntry ? width(entryLabel) + width(o.entryNo as string, big) : 0;
+  const entryX = o.left + (o.right - o.left) / 2 - entryWidth / 2;
+  let branchText = `Branch : ${o.branch}`;
+  // with an Entry No. the Branch ends before it; without one (Beginning Stock) it ends before the Date
+  const branchMax = hasEntry ? entryX - o.left - 5 : o.right - o.left - width(`Date : ${o.date}`) - 10;
+  if (width(branchText) > branchMax) branchText = cut(branchText, branchMax);
+
+  doc.setFontSize(small);
+  doc.text(branchText, o.left, o.y);
+  if (hasEntry) {
+    doc.text(entryLabel, entryX, o.y);
+    doc.setFontSize(big);
+    doc.text(o.entryNo as string, entryX + width(entryLabel, small), o.y);
+    doc.setFontSize(small);
+  }
+  doc.text(`Date : ${o.date}`, o.dateRight ?? o.right, o.y, { align: "right" });
+};
+
+// "Page x of y" on a line of its own (under the heading, at the right) and the "Created By : ..." / "Printed : ..." line at the bottom
+// right of every page - they need the final page count, so they are added at the end.
+export const addStockDocumentPageNumbers = (
+  doc: jsPDF,
+  look: PdfLook,
+  // pageRight: where "Page x of y" ends (default: `right`, the right edge of the table, where the footer line ends)
+  o: { right: number; pageRight?: number; pageY: number; bottomY: number; footer: string }
+) => {
+  const pages = doc.getNumberOfPages();
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.pdfBody); // 11 px
+  doc.setTextColor(0, 0, 0);
+
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    const h = doc.internal.pageSize.getHeight();
+    doc.setFontSize(look.size.pdfBody);
+    doc.text(`Page ${i} of ${pages}`, o.pageRight ?? o.right, o.pageY, { align: "right" });
+    doc.setFontSize(STOCK_DOCUMENT_PDF.footerSize);
+    doc.text(o.footer, o.right, h - o.bottomY, { align: "right" });
+  }
+};
 
 // the `styles` of a block heading row ("Supplier : ...", "Item : ...")
 export const pdfGroupStyles = (look: PdfLook = CLASSIC) => ({

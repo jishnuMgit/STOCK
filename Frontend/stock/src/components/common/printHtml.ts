@@ -26,7 +26,7 @@ export const previewPrintedLine = (html: string): { css: string; line: string } 
   const rule = /@bottom-right\s*\{\s*content:\s*"([A-Za-z ]+) : ((?:[^"\\]|\\.)*)";\s*font:\s*([^;}]+);/.exec(html);
   if (!rule) return { css: "", line: "" };
 
-  // the word before the info: "Printed", or "Saved By" on a document that shows who saved it
+  // the word before the info: "Printed", or "Created By" on a document that shows who saved it
   const label = rule[1];
 
   // undo cssStr(): \3C = "<", \" = ", \\ = \
@@ -49,7 +49,7 @@ export const previewPageNumber = (html: string): { css: string; label: string; s
   if (!rule) return { css: "", label: "", script: "" };
 
   return {
-    css: `.preview-page{position:absolute;right:20px;top:0;visibility:hidden;font:${rule[1]};color:#000}`,
+    css: `.preview-page{position:absolute;right:${html.includes('class="pagerow"') ? 32 : 20}px;top:0;visibility:hidden;font:${rule[1]};color:#000}`,
     label: `<div class="preview-page">Page 1 of 1</div>`,
     script:
       `<script>(function(){var p=document.querySelector('.preview-page');var e=document.querySelector('td.pagerow,td.sub,td.info,td.br');` +
