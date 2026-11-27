@@ -138,8 +138,8 @@ const RptZatcaDocumentStatus: React.FC = () => {
       dateType:
         dateMode === "By Submission Date" ? 0 : dateMode === "By Document Issue Date" ? 1 : 2,
       excludeInterCompany,
-      fromDate,
-      toDate,
+     fromDate: dayjs(fromDate, DATE_FORMAT).format("DD/MM/YYYY"),
+     toDate: dayjs(toDate, DATE_FORMAT).format("DD/MM/YYYY"),
     };
 
     setBusy(true);

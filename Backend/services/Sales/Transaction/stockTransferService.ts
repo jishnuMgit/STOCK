@@ -1,3 +1,4 @@
+import { savedByInfo } from "../../../utils/savedByInfo.js";
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
 import { resolveServerDate } from "../../common/DateTimeService.js";
@@ -944,6 +945,8 @@ export type StockTransferPrint = {
     fdocno: string;
     fdate: string | null;
     fnote: string | null;
+    // "<user>  dd/mm/yyyy hh:mm" of the save (fsuserid / fsuserdate): the "Saved By" line at the bottom right of the print
+    fsavedby: string;
   };
   lines: StockTransferPrintLine[];
 };
@@ -1025,6 +1028,7 @@ export async function getStockTransferPrintService(
       fdocno: txtDocNo,
       fdate: document.header?.fdate ?? null,
       fnote: document.header?.fnote ?? null,
+      fsavedby: savedByInfo(document.header?.fsuserid, document.header?.fsuserdate),
     },
     lines,
   };

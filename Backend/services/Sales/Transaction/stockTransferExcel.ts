@@ -51,7 +51,7 @@ export const buildStockTransferWorkbook = async ({
   });
 
   ws.columns = [
-    { width: 8 }, // Sl.#
+    { width: 8 }, // Line
     { width: 18 }, // Item ID
     { width: 44 }, // Item Name
     { width: 10 }, // Unit
@@ -96,7 +96,7 @@ export const buildStockTransferWorkbook = async ({
 
   // ---- column labels ----
   const head = ws.getRow(headRow);
-  head.values = ["Sl.#", "Item ID", "Item Name", "Unit", "Qty.", "Unit Cost", "Total Cost"];
+  head.values = ["Line", "Item ID", "Item Name", "Unit", "Qty.", "Unit Cost", "Total Cost"];
   head.eachCell((cell, col) => {
     cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;

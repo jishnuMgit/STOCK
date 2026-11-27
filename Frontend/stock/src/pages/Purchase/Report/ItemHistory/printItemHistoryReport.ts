@@ -169,11 +169,11 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   .co   { font-size: ${LOOK.size.company}pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
   .head { font-size: ${LOOK.size.heading}pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
   .br   { font-size: ${LOOK.size.body}pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
        padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-size: ${LOOK.size.columnHead ?? LOOK.size.body}pt; font-weight: normal; text-align: left; }
-  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; }
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; }
   .r { text-align: right; }
-  .tot td { border-top: 1px solid ${REPORT_STYLE.lineColor}; font-weight: bold; }
+  .tot td { border-top: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; font-weight: bold; }
   .info { margin-bottom: 6px; }
   .info .g { display: grid; min-height: 20px; align-items: center; }
   .info .g > div { padding: 1px 4px; }

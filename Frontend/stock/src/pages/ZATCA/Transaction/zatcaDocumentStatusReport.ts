@@ -132,12 +132,12 @@ export const buildReportHtml = (d: ReportData): string => {
   .co   { font-size: 14pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
   .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
   .br   { font-size: 9pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
        padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
-  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px;
        word-wrap: break-word; overflow-wrap: anywhere; }
   .r { text-align: right; }
-  .tot td { border-top: 1px solid ${REPORT_STYLE.lineColor}; font-weight: bold; }
+  .tot td { border-top: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -204,7 +204,7 @@ export const printZatcaDocumentStatusReport = (report: ReportData): void => {
 --------------------------------------------------------- */
 
 type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // ${REPORT_STYLE.lineColor}
+const BORDER: RGB = [199, 209, 228]; // #c7d1e4 (REPORT_STYLE.lineColor)
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
@@ -261,7 +261,7 @@ export const buildPdfBlob = async (d: ReportData): Promise<Blob> => {
       fontSize: 9,
       cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
-      lineWidth: 0.2,
+      lineWidth: REPORT_STYLE.pdf.lineWidth,
       minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "linebreak",

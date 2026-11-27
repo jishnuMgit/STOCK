@@ -1,3 +1,4 @@
+import { savedByInfo } from "../../../utils/savedByInfo.js";
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
 import { resolveServerDate } from "../../common/DateTimeService.js";
@@ -702,7 +703,13 @@ export async function getBeginningBalancePrintService(
   lkpBranch: string,
   year: number
 ): Promise<{
-  header: { fconame: string; fbrname: string };
+  header: {
+    fconame: string;
+    fbrname: string;
+    fdate: string | null;
+    // "<user>  dd/mm/yyyy hh:mm" of the save: the "Created By" line at the bottom right of the print
+    fsavedby: string;
+  };
   lines: BeginningBalancePrintLine[];
 }> {
   const cursorName =
@@ -754,10 +761,15 @@ export async function getBeginningBalancePrintService(
     [PstrCoID, lkpBranch]
   );
 
+  // the date of the balance and who created it (the saved document's header)
+  const saved = await getBeginningBalanceService(PstrCoID, String(year), lkpBranch);
+
   return {
     header: {
       fconame: String(company.rows[0]?.fconame ?? "").trim(),
       fbrname: String(branch.rows[0]?.fbrname ?? "").trim(),
+      fdate: saved.header?.fdate ?? null,
+      fsavedby: savedByInfo(saved.header?.fcuserid, saved.header?.fcuserdateraw ?? saved.header?.fcuserdate),
     },
     lines,
   };

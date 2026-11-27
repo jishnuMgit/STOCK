@@ -88,6 +88,8 @@ export const beginningStockPrintHeaderKeys: KeyMap = {
   fbrname: "txtBranchName",
   fdate: "dtpDate",
   fdocno: "txtDocNo",
+  fnote: "txtNote",
+  fsavedby: "txtSavedBy",
 };
 
 export const beginningStockPrintLineKeys: KeyMap = {
@@ -181,6 +183,7 @@ export const stockTransferPrintHeaderKeys: KeyMap = {
   fdocno: "txtDocNo",
   fdate: "dtpDate",
   fnote: "txtNote",
+  fsavedby: "txtSavedBy",
 };
 
 export const stockTransferPrintLineKeys: KeyMap = {
@@ -227,6 +230,7 @@ export const stockAdjustmentPrintHeaderKeys: KeyMap = {
   fdocno: "txtDocNo",
   fdate: "dtpDate",
   fnote: "txtNote",
+  fsavedby: "txtSavedBy",
 };
 
 export const stockAdjustmentPrintLineKeys: KeyMap = {
@@ -517,6 +521,8 @@ export const beginningBalanceHeaderKeys: KeyMap = {
 export const beginningBalancePrintHeaderKeys: KeyMap = {
   fconame: "txtCoName",
   fbrname: "txtBranchName",
+  fdate: "dtpDate",
+  fsavedby: "txtSavedBy",
 };
 
 // ... and a row of it (the account level colours the row)

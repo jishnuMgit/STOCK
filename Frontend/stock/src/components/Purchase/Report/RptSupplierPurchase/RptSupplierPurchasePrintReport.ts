@@ -242,7 +242,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   extra: `
   tr.gap td { border: 0; height: 14px; }
   tr.info td { border: 0; height: 20px; }
-  tr.labels th { border: 1px solid ${REPORT_STYLE.lineColor}; }
+  tr.labels th { border: ${REPORT_STYLE.html.lineWidth}px solid ${REPORT_STYLE.lineColor}; }
   tr.foot td { border: 0; height: 20px; }`,
 })}
 </style>

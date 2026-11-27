@@ -11,7 +11,7 @@ import {
   buildHtml,
   printBeginningBalanceReport,
   type PrintReport,
-} from "../../../../components/Transaction/BeginningBalance/BeginningBalancePrintReport";
+} from "../../../../components/Transaction/BeginningBalance/RptBeginningBalancePrint";
 import {
   MENU_ID,
   api,
@@ -170,12 +170,12 @@ const BeginningBalance: React.FC = () => {
           setDtpDate(result.header.dtpDate);
         }
 
-        // "Saved By : X date / Last Modified By : Y date", as the old form showed
+        // "Created By : X date / Last Modified By : Y date", as the old form showed
         const header = result.header;
         let info = "";
 
         if (header?.txtSavedBy) {
-          info = `Saved By : ${header.txtSavedBy} ${header.txtSavedOn ?? ""}`;
+          info = `Created By : ${header.txtSavedBy} ${header.txtSavedOn ?? ""}`;
         }
 
         if (header?.txtModifiedBy) {

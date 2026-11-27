@@ -69,9 +69,9 @@ export const buildHtml = (r: PrintReport) => {
   tr { page-break-inside: avoid; }
   .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
   .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight + html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
        padding: 0 ${html.cellPaddingX}px; font-weight: normal; text-align: left; }
-  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 2px ${html.cellPaddingX}px;
+  td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 2px ${html.cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .name { white-space: pre-wrap; }                  /* keeps the level 4 indent */
   .r { text-align: right; }

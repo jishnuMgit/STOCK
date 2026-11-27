@@ -1,6 +1,6 @@
-// StockAdjustmentPrintReport.ts
+// RptStockAdjustmentPrint.ts
 // The printed page (the old rptADJprint): A4 landscape, company name, heading, then
-// Branch / Entry No. / Date and the note, then Sl.# / Item ID / Item Name / Unit /
+// Branch / Entry No. / Date, then Line / Item ID / Item Name / Unit /
 // Qty. In / Qty. Out / Unit Cost / Total Cost, and a Total row at the end. "Page x of
 // y" top right and the report info bottom right of every page.
 // Printed through components/common/printHtml (a hidden iframe).
@@ -18,6 +18,8 @@ export type PrintHeader = {
   txtNote: string | null;
   // "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
   txtReportInfo: string;
+  // "<user>  dd/mm/yyyy hh:mm" of the save - bottom right of every page, after "Created By :" (the print's own user and time are used when empty)
+  txtSavedBy?: string;
 };
 
 // one line of the report
@@ -59,10 +61,10 @@ export const totalsOf = (rows: PrintLine[]) => ({
 });
 
 const rowHtml = (row: PrintLine) => `<tr>
-      <td>${esc(row.txtSlNo)}</td>
+      <td class="c">${esc(row.txtSlNo)}</td>
       <td>${esc(row.lkpItemID)}</td>
       <td>${esc(row.lkpItemName)}</td>
-      <td>${esc(row.txtUnit)}</td>
+      <td class="u">${esc(row.txtUnit)}</td>
       <td class="r">${formatQty(Number(row.txtQtyIn))}</td>
       <td class="r">${formatQty(Number(row.txtQtyOut))}</td>
       <td class="r">${formatCost(Number(row.txtUnitCost))}</td>
@@ -81,33 +83,33 @@ export const buildHtml = (r: PrintReport) => {
   look: "inter",
   orientation: "landscape",
   margin: "12mm 10mm 14mm 15mm",
-  reportInfo: cssStr(r.txtReportInfo),
+  // the bottom right of every page: "Created By : <user> <time of the save>" (the print's own user and time when none is saved)
+  reportInfo: cssStr(r.txtSavedBy || r.txtReportInfo),
+  infoLabel: r.txtSavedBy ? "Created By" : "Printed",
+  // the stock document look (common/reportStyle.ts, STOCK_DOCUMENT_CSS): the 11 px text, the line colour and the row spaces
+  stockLook: true,
 })}
 </style>
 </head>
 <body>
 <table>
   <colgroup>
-    <col style="width:5%" /><col style="width:14%" /><col style="width:31%" />
-    <col style="width:7%" /><col style="width:10%" /><col style="width:10%" />
-    <col style="width:11%" /><col style="width:12%" />
+    <col style="width:3.6%" /><col style="width:14%" /><col style="width:44.1%" />
+    <col style="width:4%" /><col style="width:6%" /><col style="width:6%" />
+    <col style="width:6%" /><col style="width:14%" />
   </colgroup>
   <thead>
     <tr><td colspan="8" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
     <tr><td colspan="8" class="head" style="border:0">${esc(REPORT_HEADING)}</td></tr>
-    <tr><td colspan="8" class="info" style="border:0"><div style="justify-content:flex-start;gap:48px">
-      <!-- the Date is not at the right end: the right end of this line is "Page x of y", as on the reports -->
+    <tr><td colspan="8" class="pagerow" style="border:0"></td></tr>
+    <tr><td colspan="8" class="info" style="border:0"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline">
+      <!-- Branch at the left, Entry No. in the middle, Date at the right end -->
       <span>Branch : <b>${esc(r.txtBranchName)}</b></span>
-      <span>Entry No. : <b>${esc(r.txtDocNo)}</b></span>
-      <span>Date : <b>${esc(formatDate(r.dtpDate))}</b></span>
-    </div></td></tr>${
-      r.txtNote
-        ? `
-    <tr><td colspan="8" class="info" style="border:0">Note : <b>${esc(r.txtNote)}</b></td></tr>`
-        : ""
-    }
+      <span class="entry">Entry No. : <b>${esc(r.txtDocNo)}</b></span>
+      <span class="date">Date : <b>${esc(formatDate(r.dtpDate))}</b></span>
+    </div></td></tr>
     <tr>
-      <th>Sl.#</th><th>Item ID</th><th>Item Name</th><th>Unit</th>
+      <th>Line</th><th>Item ID</th><th>Item Name</th><th>Unit</th>
       <th class="r">Qty. In</th><th class="r">Qty. Out</th>
       <th class="r">Unit Cost</th><th class="r">Total Cost</th>
     </tr>
@@ -121,6 +123,7 @@ export const buildHtml = (r: PrintReport) => {
       <td></td>
       <td class="r"><b>${formatCost(totals.cost)}</b></td>
     </tr>
+    <tr class="note"><td colspan="8" style="border:0">Note : <b>${esc(r.txtNote)}</b></td></tr>
   </tbody>
 </table>
 </body>
