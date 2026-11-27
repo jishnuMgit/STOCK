@@ -649,6 +649,7 @@ const UserAudit: React.FC = () => {
     {/* the Print Preview (after Print) */}
     {preview && (
       <ReportPreview
+        showClose={false}
         html={buildHtml(preview.report)}
         fileBase={preview.fileBase}
         onPrint={() => printUserAuditReport(preview.report)}
