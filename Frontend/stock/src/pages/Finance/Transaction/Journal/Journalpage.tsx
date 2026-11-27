@@ -102,6 +102,7 @@ const JournalPage: React.FC = () => {
     fetchLookups,
     fetchJournal,
     saveJournal,
+    postJournal,
   } = useJournal();
 
   /* =======================================================
@@ -125,6 +126,9 @@ const JournalPage: React.FC = () => {
 
   /* true when the typed journal no. was loaded from the database */
   const [isExisting, setIsExisting] = useState(false);
+
+  /* true when the loaded journal is already posted */
+  const [isPosted, setIsPosted] = useState(false);
 
   /* journal number loading + manual refresh (after save / clear) */
   const [journalNoLoading, setJournalNoLoading] = useState(false);
@@ -231,6 +235,7 @@ const JournalPage: React.FC = () => {
 
   useEffect(() => {
     setIsExisting(false);
+    setIsPosted(false);
 
     if (!branch || !type) {
       setJournalNo("");
@@ -315,6 +320,7 @@ const JournalPage: React.FC = () => {
   const handleJournalNoChange = useCallback((value: string) => {
     setJournalNo(value);
     setIsExisting(false);
+    setIsPosted(false);
   }, []);
 
   const handleJournalNoEnter = useCallback(async () => {
@@ -330,6 +336,7 @@ const JournalPage: React.FC = () => {
     /* not found = new journal */
     if (!result) {
       setIsExisting(false);
+      setIsPosted(false);
       dateRef.current?.focus();
       return;
     }
@@ -357,6 +364,7 @@ const JournalPage: React.FC = () => {
     setJournalDate(fromIsoDate(result.header.date));
     setNote(result.header.note);
     setIsExisting(true);
+    setIsPosted(result.posted);
 
     focusTableField(0, "accountId");
   }, [branch, journalNo, fetchJournal, accountOptions, focusTableField]);
@@ -599,6 +607,7 @@ const JournalPage: React.FC = () => {
     setActiveDescriptionRow(null);
     setRows(createRows());
     setIsExisting(false);
+    setIsPosted(false);
     setDocNoRefresh((count) => count + 1);
 
     requestAnimationFrame(() => {
@@ -664,6 +673,45 @@ const JournalPage: React.FC = () => {
     rows,
     clearForm,
   ]);
+
+  /* =======================================================
+     POST JOURNAL (VB cmdPost_Click)
+  ======================================================= */
+
+  const handlePost = useCallback(async () => {
+    if (saving) {
+      return;
+    }
+
+    if (!branch) {
+      notify.error("Please select a 'Branch'");
+      return;
+    }
+
+    if (!journalNo.trim()) {
+      notify.error("Please input 'Journal No.'");
+      return;
+    }
+
+    if (!journalDate) {
+      notify.error("Please select 'Date'");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await postJournal(branch, journalNo.trim());
+
+      notify.success("Document posted");
+
+      clearForm();
+    } catch (error: unknown) {
+      notify.error(error instanceof Error ? error.message : "Not posted, try again");
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, branch, journalNo, journalDate, postJournal, clearForm]);
 
   /* =======================================================
      RETURN
@@ -760,6 +808,9 @@ const JournalPage: React.FC = () => {
             ref={actionsRef}
             clearForm={clearForm}
             onSave={handleSave}
+            onPost={handlePost}
+            isPosted={isPosted}
+            saveLabel={isExisting ? "Modify" : "Save"}
           />
         </div>
       </div>
