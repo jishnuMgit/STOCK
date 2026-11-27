@@ -651,7 +651,7 @@ const UnitPage: React.FC = () => {
             FORM
         ==================================================== */}
 
-          <div className="p-[12px] m-[12px]">
+          <div className="p-[12px] mb-3">
             {/* TABLE AREA */}
 
             <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">

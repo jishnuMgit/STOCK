@@ -488,11 +488,11 @@ const CompanyPage: React.FC = () => {
       <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
         <Header Name="Company" />
 
-        <div className="m-[12px] p-[12px]">
+        <div className="m-3">
           <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
             <label
               htmlFor="txtCoID"
-              className="pr-3 text-right text-[14px] text-gray-600"
+              className="pr-3 text-right text-[14px] text-gray-600 "
             >
               Company ID :
             </label>

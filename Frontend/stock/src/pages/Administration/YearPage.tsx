@@ -473,7 +473,7 @@ const YearPage: React.FC = () => {
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Year" />
 
-          <section className="px-3.5 pb-6 pt-3">
+          <section className="px-3 pb-3 pt-3">
             {/* Grid */}
             <div className="h-[470px] overflow-auto border border-[#BFE8D0] bg-white">
               <table className="w-full table-fixed border-collapse text-[12px] text-[#24364d]">

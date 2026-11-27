@@ -558,7 +558,7 @@ const DocumentPage: React.FC = () => {
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <Header Name="Document" />
 
-          <section className="px-3.5 pb-6 pt-3">
+          <section className="px-3 pb-3 pt-3">
             {/* Module */}
             <div className="flex items-center gap-3">
               <FieldLabel>Module :</FieldLabel>

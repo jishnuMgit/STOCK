@@ -1695,8 +1695,8 @@ const StockAdjustmentPage: React.FC = () => {
         {/* TITLE BAR */}
         <Header Name="Stock Adjustment" />
 
-        {/* FORM BODY */}
-        <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">
+      {/* FORM BODY */}
+      <div className=" flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-3">
 
           {/* HEADER FORM: Branch, Entry No., Date */}
           <section className="mb-3 flex h-[30px] bg-white shrink-0 items-center justify-between gap-8">
