@@ -377,11 +377,33 @@ async function insertLines(
 
 /* =========================================================
    JOURNAL TYPES
-   Journal has a single doc type: JV.
+   dbo.filllookupjvfinparam -> tblfinparam (fptype = 'ATYPE')
 ========================================================= */
 
-export function getJournalTypesService(): { fpid: string; fpname: string }[] {
-    return [{ fpid: JOURNAL_DOC_TYPE, fpname: "Journal" }];
+export async function getJournalTypesService(
+    ctx: ReceiptContext,
+): Promise<{ fpid: string; fpname: string }[]> {
+    const client = await pool.connect();
+
+    try {
+        if (isEmpty(ctx.pstrCoID)) {
+            throw new JournalError("Company ID is required");
+        }
+
+        const result = await client.query(
+            `SELECT fpid, fpname
+               FROM dbo.filllookupjvfinparam($1::varchar)`,
+            [ctx.pstrCoID],
+        );
+
+        return result.rows;
+    } catch (error: unknown) {
+        console.error("getJournalTypesService error:", error);
+
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 /* =========================================================

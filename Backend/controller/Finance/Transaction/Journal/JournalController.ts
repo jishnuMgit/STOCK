@@ -73,9 +73,9 @@ export async function getJournalLookups(_req: Request, res: Response) {
 export async function getJournalDocNo(req: Request, res: Response) {
     try {
         const { pstrCoID, pstrYear } = getCtx(res);
-        
+
         const brId = String(req.query.brId ?? "").trim();
-        
+
         if (!brId) {
             return res
                 .status(400)
@@ -104,9 +104,9 @@ export async function getJournalDocNo(req: Request, res: Response) {
 /* GET /api/journal/types */
 export async function getJournalTypes(_req: Request, res: Response) {
     try {
-        return res
-            .status(200)
-            .json({ success: true, data: getJournalTypesService() });
+        const data = await getJournalTypesService(getCtx(res));
+
+        return res.status(200).json({ success: true, data });
     } catch (error: unknown) {
         return handleError(res, error, "Failed to load journal types");
     }
