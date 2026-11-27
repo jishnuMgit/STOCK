@@ -129,7 +129,7 @@ function getIntDocNo(txtDocNo: string): number {
 }
 
 /* =========================================================
-   PROCEDURE CALL : dbo.sp_frmjv
+   PROCEDURE CALL : dbo.sp_pagejv
    (modes S and D only - header / lines are read with plain SELECTs
     because the procedure has no refcursor / OUT parameter)
 ========================================================= */
@@ -162,7 +162,7 @@ async function callJournalProcedure(
     }
 
     const sql = `
-    CALL dbo.sp_frmjv(
+    CALL dbo.sp_pagejv(
       $1::varchar,
       $2::varchar,
       $3::smallint,
