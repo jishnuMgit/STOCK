@@ -28,6 +28,7 @@ import {
   type Branch,
   type JournalType,
 } from "../../../../hooks/useJournal";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 /* =========================================================
@@ -103,6 +104,7 @@ const JournalPage: React.FC = () => {
     fetchJournal,
     saveJournal,
     postJournal,
+    deleteJournal,
   } = useJournal();
 
   /* =======================================================
@@ -143,6 +145,7 @@ const JournalPage: React.FC = () => {
   const defaultBranchRef = useRef("");
   const defaultTypeRef = useRef("");
 
+  const { confirm, dialog: confirmDialog } = useConfirmModal();
   const { notify, dialog: messageDialog } = useMessageModal("Journal");
 
   /* =======================================================
@@ -714,6 +717,65 @@ const JournalPage: React.FC = () => {
   }, [saving, branch, journalNo, journalDate, postJournal, clearForm]);
 
   /* =======================================================
+   DELETE JOURNAL (VB cmdDelete_Click)
+======================================================= */
+
+  const handleDelete = useCallback(async () => {
+    if (saving) {
+      return;
+    }
+
+    if (!branch || !journalNo.trim()) {
+      notify.error("Please input 'Journal No.'");
+      return;
+    }
+
+    if (!isExisting) {
+      notify.error("This journal is not saved");
+      return;
+    }
+
+    if (isPosted) {
+      notify.error("Posted document cannot be deleted");
+      return;
+    }
+
+    const shouldDelete = await confirm({
+      title: "Journal",
+      message: "Do you want to Delete?",
+      confirmLabel: "Yes",
+      cancelLabel: "No",
+    });
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await deleteJournal(branch, journalNo.trim());
+
+      notify.success("Deleted successfully");
+
+      clearForm();
+    } catch (error: unknown) {
+      notify.error(error instanceof Error ? error.message : "Not deleted, try again");
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    saving,
+    branch,
+    journalNo,
+    isExisting,
+    isPosted,
+    confirm,
+    deleteJournal,
+    clearForm,
+  ]);
+
+  /* =======================================================
      RETURN
   ======================================================= */
 
@@ -808,12 +870,14 @@ const JournalPage: React.FC = () => {
             ref={actionsRef}
             clearForm={clearForm}
             onSave={handleSave}
+            onDelete={handleDelete}
             onPost={handlePost}
             isPosted={isPosted}
             saveLabel={isExisting ? "Modify" : "Save"}
           />
         </div>
       </div>
+      {confirmDialog}
       {messageDialog}
     </div>
   );
