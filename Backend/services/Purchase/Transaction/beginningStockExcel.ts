@@ -1,6 +1,6 @@
 // services/Purchase/Transaction/beginningStockExcel.ts
 // The Beginning Stock report as an Excel file (same columns as the printed report:
-// Sl.#, Item ID, Item Name, Unit, Qty., Unit Cost, Total Cost - and a Total row).
+// Line, Item ID, Item Name, Unit, Qty., Unit Cost, Total Cost - and a Total row).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
 import { applyReportFont, levelFont, setPrintedFooter, thin } from "../../../utils/reportStyle.js";
@@ -53,7 +53,7 @@ export const buildBeginningStockWorkbook = async ({
   });
 
   ws.columns = [
-    { width: 8 }, // Sl.#
+    { width: 8 }, // Line
     { width: 18 }, // Item ID
     { width: 44 }, // Item Name
     { width: 10 }, // Unit
@@ -84,7 +84,7 @@ export const buildBeginningStockWorkbook = async ({
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
-  head.values = ["Sl.#", "Item ID", "Item Name", "Unit", "Qty.", "Unit Cost", "Total Cost"];
+  head.values = ["Line", "Item ID", "Item Name", "Unit", "Qty.", "Unit Cost", "Total Cost"];
   head.eachCell((cell, col) => {
     cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;

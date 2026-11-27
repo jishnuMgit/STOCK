@@ -24,7 +24,7 @@ import {
   buildHtml,
   printBeginningStockReport,
   type PrintReport,
-} from "../../../components/Transaction/BeginningStock/BeginningStockPrintReport";
+} from "../../../components/Transaction/BeginningStock/RptBeginningStockPrint";
 import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
 import { useMessageModal } from "../../../hooks/useMessageModal";
 import TransactionActions from "../../../components/common/TransactionActions";
@@ -763,12 +763,12 @@ const BeginningStockPage: React.FC = () => {
         setDtpDate(documentResult.header?.dtpDate || todayLocal());
         setTxtNote(documentResult.header?.txtNote ?? "");
 
-        // "Saved By : X date / Last Modified By : Y date", as the old form showed
+        // "Created By : X date / Last Modified By : Y date", as the old form showed
         const header = documentResult.header;
         let info = "";
 
         if (header?.txtSavedBy) {
-          info = `Saved By : ${header.txtSavedBy} ${header.txtSavedOn ?? ""}`;
+          info = `Created By : ${header.txtSavedBy} ${header.txtSavedOn ?? ""}`;
         }
 
         if (header?.txtModifiedBy) {
@@ -1994,7 +1994,7 @@ const BeginningStockPage: React.FC = () => {
           {txtUserInfo !== "" && (
             <table className="self-end border-collapse text-left text-[12px] text-gray-500">
               <tbody>
-                {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+                {/* one row per line ("Created By : ..." / "Last Modified By : ..."), in
                 three columns - label, colon, text - so the colons line up */}
                 {txtUserInfo.split("\n").map((line) => {
                   const [label, ...rest] = line.split(" : ");
