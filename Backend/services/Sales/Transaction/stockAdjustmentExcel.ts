@@ -1,6 +1,6 @@
 // services/Sales/Transaction/stockAdjustmentExcel.ts
 // The Stock Adjustment report as an Excel file (same columns as the printed report:
-// Sl.#, Item ID, Item Name, Unit, Qty. In, Qty. Out, Unit Cost, Total Cost - and a
+// Line, Item ID, Item Name, Unit, Qty. In, Qty. Out, Unit Cost, Total Cost - and a
 // Total row).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
@@ -52,7 +52,7 @@ export const buildStockAdjustmentWorkbook = async ({
   });
 
   ws.columns = [
-    { width: 8 }, // Sl.#
+    { width: 8 }, // Line
     { width: 18 }, // Item ID
     { width: 44 }, // Item Name
     { width: 10 }, // Unit
@@ -99,7 +99,7 @@ export const buildStockAdjustmentWorkbook = async ({
   // ---- column labels ----
   const head = ws.getRow(headRow);
   head.values = [
-    "Sl.#",
+    "Line",
     "Item ID",
     "Item Name",
     "Unit",

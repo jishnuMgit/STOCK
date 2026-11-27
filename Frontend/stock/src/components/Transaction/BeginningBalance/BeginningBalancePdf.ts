@@ -6,18 +6,26 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
-import { PDF_BLACK, hexToRgb, type RGB, PDF_CELL_PADDING } from "../../common/reportPdf";
+import {
+  PDF_BLACK,
+  STOCK_DOCUMENT_PDF,
+  addStockDocumentPageNumbers,
+  drawStockInfoLine,
+  registerReportPdfFont,
+  stockDocumentTable,
+  type RGB,
+} from "../../common/reportPdf";
 import { REPORT_STYLE } from "../../common/reportStyle";
 
 import {
   REPORT_HEADING,
   formatAmount,
+  formatDate,
   formatTotal,
   totalsOf,
   type PrintReport,
-} from "./BeginningBalancePrintReport";
+} from "./RptBeginningBalancePrint";
 
-const BORDER = hexToRgb(REPORT_STYLE.lineColor);
 const BLACK = PDF_BLACK;
 
 // the old Detail_BeforePrint: level 1 red, 2 green, 3 blue, the accounts black
@@ -36,19 +44,23 @@ const levelColor = (level: number | null): RGB => {
 
 const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
-const TABLE_TOP = 38 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
+// SPACE_AFTER_HEADING: the room under "Beginning Balance" for the line of "Page x of y" (the info line and the table move down with it)
+const SPACE_AFTER_HEADING = 3;
+// below company / heading / the info line - the same as the other stock documents (4.5 mm closer than the common gap)
+const TABLE_TOP = MARGIN.top + 30 + SPACE_AFTER_HEADING + REPORT_STYLE.pdf.titleGap + REPORT_STYLE.pdf.tableGap - 4.5;
 
 const PAD = REPORT_STYLE.pdf.cellPadding;
 const INDENT_PER_SPACE = 1.0; // mm: the leading spaces of the name become padding
 
-export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
+export const buildBeginningBalancePdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   // Account ID | Account Name (the rest) | C.C. ID | Debit | Credit
   const idW = 24;
   const ccW = 20;
-  const amountW = 32;
+  const amountW = 28;
   const columnStyles = {
     0: { cellWidth: idW },
     1: { cellWidth: usable - idW - ccW - amountW * 2 },
@@ -71,8 +83,8 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
           cellPadding: {
             top: PAD,
             bottom: PAD,
-            right: REPORT_STYLE.pdf.cellPaddingX,
-            left: REPORT_STYLE.pdf.cellPaddingX + lead * INDENT_PER_SPACE,
+            right: STOCK_DOCUMENT_PDF.cellPaddingX,
+            left: STOCK_DOCUMENT_PDF.cellPaddingX + lead * INDENT_PER_SPACE,
           },
         },
       },
@@ -90,25 +102,32 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
 
   // the Total row at the end
   const totals = totalsOf(report.rows);
-  const totalStyles = { halign: "right" as const };
+  const totalStyles = { halign: "right" as const, fontStyle: "bold" as const };
   body.push([
-    { content: "Total", colSpan: 3, styles: totalStyles },
+    { content: "Total :", colSpan: 3, styles: totalStyles },
     { content: formatTotal(totals.debit), styles: totalStyles },
     { content: formatTotal(totals.credit), styles: totalStyles },
   ]);
 
-  // company / heading / branch - drawn on every page
+  // company / heading / the info line - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont(REPORT_STYLE.pdfFont, "normal");
-    doc.setFontSize(REPORT_STYLE.size.company);
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.txtCoName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFontSize(REPORT_STYLE.size.heading);
-    doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+    doc.setFontSize(look.size.heading);
+    doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15 + REPORT_STYLE.pdf.titleGap, { align: "center" });
 
-    doc.setFontSize(REPORT_STYLE.size.pdfBody);
-    doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, MARGIN.top + 23);
+    // the info line (common/reportPdf.ts): Branch at the left, Date at the right end - 11 px
+    drawStockInfoLine(doc, {
+      y: MARGIN.top + 23 + SPACE_AFTER_HEADING + REPORT_STYLE.pdf.titleGap,
+      left: MARGIN.left,
+      right: PAGE_W - MARGIN.right,
+      dateRight: PAGE_W - MARGIN.right - STOCK_DOCUMENT_PDF.shiftLeft,
+      branch: report.txtBranchName,
+      date: formatDate(report.dtpDate),
+    });
   };
 
   autoTable(doc, {
@@ -123,21 +142,8 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: {
-      font: REPORT_STYLE.pdfFont,
-      fontSize: REPORT_STYLE.size.pdfBody,
-      cellPadding: PDF_CELL_PADDING,
-      lineColor: BORDER,
-      lineWidth: REPORT_STYLE.pdf.lineWidth,
-      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
-      valign: "middle",
-      overflow: "ellipsize",
-      textColor: BLACK,
-    },
-    headStyles: {
-      textColor: BLACK,
-      fontStyle: "normal",
-    },
+    // the stock document look (common/reportPdf.ts, STOCK_DOCUMENT_PDF): the cell space, the thin light lines drawn once
+    ...stockDocumentTable(look, STOCK_DOCUMENT_PDF.cellPaddingX, STOCK_DOCUMENT_PDF.cellPaddingX),
     columnStyles,
     head: [
       [
@@ -152,21 +158,14 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     didDrawPage: drawTitle,
   });
 
-  // page numbers need the final page count, so they are added at the end
-  const pages = doc.getNumberOfPages();
-  doc.setFont(REPORT_STYLE.pdfFont, "normal");
-  doc.setFontSize(REPORT_STYLE.size.small);
-  doc.setTextColor(0, 0, 0);
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top + 23, {
-      align: "right",
-    });
-    doc.text(report.txtReportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
-      align: "right",
-    });
-  }
+  // "Page x of y" (on a line of its own under the heading) and the "Created By" line at the bottom right of every page (common/reportPdf.ts)
+  addStockDocumentPageNumbers(doc, look, {
+    right: PAGE_W - MARGIN.right,
+    pageRight: PAGE_W - MARGIN.right - STOCK_DOCUMENT_PDF.shiftLeft,
+    pageY: MARGIN.top + 20 + REPORT_STYLE.pdf.titleGap,
+    bottomY: MARGIN.bottom - 6,
+    footer: `${report.txtSavedBy ? "Created By" : "Printed"} : ${report.txtSavedBy || report.txtReportInfo}`,
+  });
 
   return doc.output("blob");
 };

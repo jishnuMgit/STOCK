@@ -49,7 +49,7 @@ export const previewPageNumber = (html: string): { css: string; label: string; s
   if (!rule) return { css: "", label: "", script: "" };
 
   return {
-    css: `.preview-page{position:absolute;right:20px;top:0;visibility:hidden;font:${rule[1]};color:#000}`,
+    css: `.preview-page{position:absolute;right:${html.includes('class="pagerow"') ? 32 : 20}px;top:0;visibility:hidden;font:${rule[1]};color:#000}`,
     label: `<div class="preview-page">Page 1 of 1</div>`,
     script:
       `<script>(function(){var p=document.querySelector('.preview-page');var e=document.querySelector('td.pagerow,td.sub,td.info,td.br');` +

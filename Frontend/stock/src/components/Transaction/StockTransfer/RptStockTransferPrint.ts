@@ -91,30 +91,15 @@ export const buildHtml = (r: PrintReport) => {
   // the bottom right of every page: "Created By : <user> <time of the save>" (the print's own user and time when none is saved)
   reportInfo: cssStr(r.txtSavedBy || r.txtReportInfo),
   infoLabel: r.txtSavedBy ? "Created By" : "Printed",
-  // "Page x of y" and "Printed : ..." are 11 px
-  smallSize: "11px",
-  // the line under the heading (Branch, Entry No., Date, Transfer To): 11 px, except the Entry No. itself (JD-2600001): 14 px
-  extra: `.info { font-size: 11px; height: 25px; } .info .entry b { font-size: 14px; } /* the height is the space between the Branch line and the table (the common one is 32 px) */
-  th { font-size: 11px; } /* the column headings are 11 px, the same as the rows */
-  tr.note td { padding: 10px 0 0 0; white-space: pre-wrap; } /* the "Note :" line after the Total row, at the left side - printed even when the note is empty */
-  td.u { white-space: nowrap; padding: 0 4px; } /* a unit (NOS.) is never split over two lines, even in a narrow column */
-  td.c { text-align: center; padding: 0 2px; } /* the line numbers are in the middle of their column, with only 2 px of space on each side */
-  th:first-child { padding: 0 4px; text-align: center; } /* the Line heading: in the middle, 4 px on each side - the same space on both sides, like the numbers below it */
-  /* the table lines of this print only: lighter (#e2e8f2) than the common #c7d1e4. They stay a whole 1 px: a fraction of a pixel is
-     drawn thicker on some lines and thinner on others (the line between Line and Item ID), so every line must be the same */
-  th { border-color: #e2e8f2; }
-  td { border-color: #e2e8f2; }
-  tr.tot td { border-top: 1px solid #e2e8f2; }
-  tr.note td { border: 0; }
-  .info, .pagerow, .co, .head { border: 0; }
-  .pagerow { height: 20px; } /* the line of its own for "Page x of y", between "Stock Transfer" and the Branch line */`,
+  // the stock document look (common/reportStyle.ts, STOCK_DOCUMENT_CSS): the 11 px text, the line colour and the row spaces
+  stockLook: true,
 })}
 </style>
 </head>
 <body>
 <table>
   <colgroup>
-    <col style="width:3%" /><col style="width:14%" /><col style="width:44.5%" />
+    <col style="width:3.6%" /><col style="width:14%" /><col style="width:44.1%" />
     <col style="width:4%" /><col style="width:6%" /><col style="width:6%" />
     <col style="width:14%" />
   </colgroup>
@@ -126,7 +111,7 @@ export const buildHtml = (r: PrintReport) => {
       <!-- Branch at the left, Entry No. in the middle, Date at the right end - then Transfer To at the left, under Branch, in the next row -->
       <span>Branch : <b>${esc(r.txtBranchName)}</b></span>
       <span class="entry">Entry No. : <b>${esc(r.txtDocNo)}</b></span>
-      <span style="text-align:right">Date : <b>${esc(formatDate(r.dtpDate))}</b></span>
+      <span class="date">Date : <b>${esc(formatDate(r.dtpDate))}</b></span>
     </div></td></tr>
     <tr><td colspan="7" class="info" style="border:0"><div style="display:block;text-align:${TRANSFER_TO_SIDE}">Transfer To : <b>${esc(r.txtToBranchName)}</b></div></td></tr>
     <tr>
