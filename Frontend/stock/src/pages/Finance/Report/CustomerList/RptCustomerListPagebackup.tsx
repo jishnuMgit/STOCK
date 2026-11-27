@@ -4,8 +4,8 @@ import {
   buildHtml,
   printCustomerListReport,
   type PrintReport,
-} from "./PrintCustomerListReport";
-import { buildCustomerListPdf } from "./downloadCustomerListPdf";
+} from "../../../../components/Finance/Report/RptCustomerList/RptCustomerListRpt";
+import { buildCustomerListPdf } from "../../../../components/Finance/Report/RptCustomerList/RptCustomerListPdf";
 import { saveFile } from "./saveFile";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 

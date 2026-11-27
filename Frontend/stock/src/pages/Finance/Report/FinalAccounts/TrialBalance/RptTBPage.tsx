@@ -1,15 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import Header from "../../../../../components/common/Header";
+import React, { useEffect, useMemo, useState } from "react";
+import ReportPreview from "../../../../../components/common/ReportPreview";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { previewPrintedLine } from "../../../../../components/common/printHtml";
-import { buildTrialBalancePdf } from "./downloadTrialBalancePdf";
+import { buildTrialBalancePdf } from "../../../../../components/Finance/Report/RptTB/RptTBPdf";
 import { saveFile } from "./saveFile";
 import {
   buildHtml,
   printTrialBalanceReport,
   type PrintReport,
-} from "./printTrialBalanceReport";
+} from "../../../../../components/Finance/Report/RptTB/RptTBRpt";
 import { useEnterAsTab } from "../../../../../hooks/useEnterAsTab";
 import { CustomRadio, RadioPanel } from "../../../../../components/common/ReportFormParts";
 import {
@@ -98,12 +97,13 @@ const RptTBPage: React.FC = () => {
   );
   const [entryMode, setEntryMode] = useState("All");
   // rdgReportFile (inside the Print Preview): what Download saves
-  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
 
   // print preview: shown after Print. Print there sends it to the printer,
   // Download saves the "Report File" choice
   const [preview, setPreview] = useState<{
     report: PrintReport;
+    // the name of the downloaded file, without the extension (it holds the time: made once, when the preview opens)
+    fileBase: string;
     request: NonNullable<ReturnType<typeof buildRequest>>;
   } | null>(null);
 
@@ -160,7 +160,6 @@ const RptTBPage: React.FC = () => {
     setPrintZeroBalance(yesNoOptions[1]);
     setPrintAccountGroup(yesNoOptions[0]);
     setEntryMode("All");
-    setReportFile("Excel");
   };
 
   // ------------------------------------------------------------
@@ -300,77 +299,13 @@ const RptTBPage: React.FC = () => {
         return;
       }
 
-      setPreview({ report: data.report, request });
+      setPreview({ report: data.report, fileBase: makeFileName(request, "").slice(0, -1), request });
     } catch {
       notify.error("Could not prepare the report");
     } finally {
       setBusy(false);
     }
   };
-
-  // Print in the preview: the browser print dialog (printer)
-  const handlePreviewPrint = () => {
-    if (!preview || busy) return;
-    try {
-      printTrialBalanceReport(preview.report);
-    } catch {
-      notify.error("Could not open the print view");
-    }
-  };
-
-  // ------------------------------------------------------------
-  // Download in the preview: saves the chosen file ("Save as" window, so the
-  // browser does not open it afterwards)
-  // a double click on OK must not start two saves (state is not updated yet
-  // on the second click, so a ref is used)
-  const downloading = useRef(false);
-
-  const handlePreviewOk = async () => {
-    if (!preview || busy || downloading.current) return;
-    downloading.current = true;
-    const { report, request } = preview;
-    const asPdf = reportFile === "PDF";
-
-    setBusy(true);
-    try {
-      const blob = asPdf ? await buildTrialBalancePdf(report) : await fetchExcel(request);
-      if (!blob) return; // the error is already shown
-
-      const saved = await saveFile(
-        blob,
-        makeFileName(request, asPdf ? "pdf" : "xlsx"),
-        asPdf ? "pdf" : "xlsx",
-      );
-      if (saved) {
-        
-        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
-        setPreview(null); // cancelled "Save as": the preview stays
-      }
-    } catch {
-      notify.error(
-        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
-      );
-    } finally {
-      downloading.current = false;
-      setBusy(false);
-    }
-  };
-
-  const previewHtml = useMemo(() => {
-    if (!preview) return "";
-
-    const html = buildHtml(preview.report);
-    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
-    const printed = previewPrintedLine(html);
-
-    return html
-      .replace(
-        "</head>",
-        // 40px left / 20px right margin for the preview only
-        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
-      )
-      .replace("</body>", `${printed.line}</body>`);
-  }, [preview]);
 
   // ------------------------------------------------------------
   // EXCEL button: always the .xlsx, whatever "Report File" says
@@ -429,67 +364,17 @@ const RptTBPage: React.FC = () => {
       labelWidth={168}
       onKeyDown={handleEnterAsTab}
       overlay={
-        // Print preview
+        // the Print Preview (after Print)
         preview && (
-          <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/40 p-4">
-            <div className="flex h-[90vh] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
-              <Header Name="Print Preview" />
-
-              <iframe
-                title="Print Preview"
-                srcDoc={previewHtml}
-                className="min-h-0 flex-1 border-0 bg-white"
-              />
-
-              <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
-                <div className="flex gap-3">
-                  <button
-                    id="btnPreviewPrint"
-                    type="button"
-                    onClick={handlePreviewPrint}
-                    disabled={busy}
-                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <u>P</u>rint
-                  </button>
-                  <button
-                    id="btnPreviewOk"
-                    type="button"
-                    autoFocus
-                    onClick={handlePreviewOk}
-                    disabled={busy}
-                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <u>D</u>ownload
-                  </button>
-                </div>
-
-                {/* Report File: what Download saves */}
-                <div
-                  id="rdgReportFile"
-                  className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
-                >
-                  <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                    File Format
-                  </span>
-                  <CustomRadio
-                    name="rdgReportFile"
-                    value="Excel"
-                    label="Excel"
-                    checked={reportFile === "Excel"}
-                    onChange={() => setReportFile("Excel")}
-                  />
-                  <CustomRadio
-                    name="rdgReportFile"
-                    value="PDF"
-                    label="PDF"
-                    checked={reportFile === "PDF"}
-                    onChange={() => setReportFile("PDF")}
-                  />
-                </div>
-              </footer>
-            </div>
-          </div>
+          <ReportPreview
+            showClose={false}
+            html={buildHtml(preview.report)}
+            fileBase={preview.fileBase}
+            onPrint={() => printTrialBalanceReport(preview.report)}
+            buildPdf={() => buildTrialBalancePdf(preview.report)}
+            fetchExcel={() => fetchExcel(preview.request)}
+            onClose={() => setPreview(null)}
+          />
         )
       }
     >

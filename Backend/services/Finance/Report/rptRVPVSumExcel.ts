@@ -35,14 +35,14 @@ export const buildRVPVSumWorkbook = async (report: RVPVSumReport): Promise<Buffe
   ws.columns = [{ width: 16 }, { width: 14 }, { width: 34 }, { width: 40 }, { width: 16 }];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 5, 3, "inter");
+  addReportTitle(ws, report, report.txtBranch, 5, 3);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Entry No.", "Date", "Cash/Bank Account Name", "Received From/Paid To", "Amount"];
 
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col === 5 ? "right" : "left" };
   });
@@ -80,7 +80,7 @@ export const buildRVPVSumWorkbook = async (report: RVPVSumReport): Promise<Buffe
   });
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

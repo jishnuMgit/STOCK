@@ -12,7 +12,7 @@ import {
   buildHtml,
   printStockReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptStockReport/RptStockReportPrintReport";
+} from "../../../../components/Purchase/Report/RptStockReport/RptStockReportRpt";
 import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import {
   BranchFilter,

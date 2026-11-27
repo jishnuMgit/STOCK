@@ -43,26 +43,26 @@ export const buildReceivablesWorkbook = async (
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells("A1:D1");
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = levelFont("company", false, "inter");
+  ws.getCell("A1").font = levelFont("company", false);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:D2");
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = levelFont("heading", false, "inter");
+  ws.getCell("A2").font = levelFont("heading", false);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   ws.mergeCells("A3:D3");
   ws.getCell("A3").value = report.branch;
-  ws.getCell("A3").font = levelFont("group", false, "inter");
+  ws.getCell("A3").font = levelFont("group", false);
 
   // the user and the time: bottom right of every printed page
-  setPrintedFooter(ws, report.reportInfo, "inter");
+  setPrintedFooter(ws, report.reportInfo);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Account ID", "Account Name", "Debit", "Credit"];
   head.eachCell((c, col) => {
-    c.font = levelFont("columnHead", true, "inter");
+    c.font = levelFont("columnHead", true);
     c.border = thin;
     c.alignment = { horizontal: col >= 3 ? "right" : "left" };
   });
@@ -92,7 +92,7 @@ export const buildReceivablesWorkbook = async (
   });
 
   // the whole sheet in the report font (a cell keeps its own size and bold)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

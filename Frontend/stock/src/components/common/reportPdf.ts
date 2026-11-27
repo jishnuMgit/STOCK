@@ -165,6 +165,7 @@ export const STOCK_DOCUMENT_PDF = {
   lineColor: [226, 232, 242] as RGB, // ... and light (#e2e8f2)
   infoSize: 8.25, // pt = 11 px, the line under the heading
   entrySize: 12, // pt = 16 px, the Entry No. itself
+  spaceAfterHeading: 3, // mm - the room under the heading for the line of "Page x of y"
   shiftLeft: 4, // mm - the Date and "Page x of y" end this far to the left of the right edge of the table
   footerSize: 6.75, // pt = 9 px, the "Created By : ..." line at the bottom right ("Page x of y" stays 11 px)
 };
@@ -192,6 +193,13 @@ export const stockDocumentTable = (
     // the column headings are the size of the rows
     headStyles: { ...pdfHeadStyles(look), fontSize: look.size.pdfBody, lineWidth, lineColor },
     didParseCell: (hook: CellHookData) => {
+      // a cell that names its own line width (a text row with no lines: lineWidth 0, or its own sides) keeps it
+      const own = (hook.cell.raw as { styles?: { lineWidth?: unknown } } | null | undefined)?.styles?.lineWidth;
+      if (own !== undefined) {
+        hook.cell.styles.lineWidth = own as never;
+        return;
+      }
+
       const first = hook.column.index === 0;
       if (first) hook.cell.styles.cellPadding = { top: padding, bottom: padding, left: lineCellPaddingX, right: lineCellPaddingX };
       const topRow = hook.section === "head" && hook.row.index === 0;
@@ -263,13 +271,57 @@ export const drawStockInfoLine = (
   doc.text(`Date : ${o.date}`, o.dateRight ?? o.right, o.y, { align: "right" });
 };
 
+// The stock look for a REPORT PDF (Supplier Purchase first): the company and the heading as on every report, the line under the heading
+// (the branch) 11 px, "Page x of y" on a line of its own (addStockDocumentPageNumbers) and the table from stockDocumentTable().
+// Drawn on every page, like drawReportTitle (which the old look uses); the "Printed : ..." line is drawn at the end with the page numbers.
+export const drawStockReportTitle = (
+  doc: jsPDF,
+  pageW: number,
+  margin: PdfMargin,
+  report: { txtCoName: string; txtHeading: string },
+  branch: string,
+  look: PdfLook = CLASSIC
+) => {
+  const gap = REPORT_STYLE.pdf.titleGap; // the gap between the company name and the heading
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(look.font, "normal");
+
+  doc.setFontSize(look.size.company);
+  doc.text(report.txtCoName, pageW / 2, margin.top + 8, { align: "center" });
+
+  doc.setFontSize(look.size.heading);
+  doc.text(report.txtHeading, pageW / 2, margin.top + 15 + gap, { align: "center" });
+
+  doc.setFontSize(STOCK_DOCUMENT_PDF.infoSize);
+  if (branch) {
+    // "Branch : Jeddah" - the name in bold
+    const y = margin.top + 22 + STOCK_DOCUMENT_PDF.spaceAfterHeading + gap;
+    const i = branch.indexOf(" : ");
+
+    if (i < 0) {
+      doc.text(branch, margin.left, y);
+    } else {
+      const label = `${branch.slice(0, i)} : `;
+      doc.text(label, margin.left, y);
+      doc.setFont(look.font, "bold");
+      doc.text(branch.slice(i + 3), margin.left + doc.getTextWidth(label), y);
+      doc.setFont(look.font, "normal");
+    }
+  }
+};
+
+// where the table of a stock look report starts: the room for the "Page x of y" line is added, the info line is 25 px high
+export const stockReportTableTop = (margin: PdfMargin) => pdfTableTop(margin) + STOCK_DOCUMENT_PDF.spaceAfterHeading - 1.5;
+
 // "Page x of y" on a line of its own (under the heading, at the right) and the "Created By : ..." / "Printed : ..." line at the bottom
 // right of every page - they need the final page count, so they are added at the end.
 export const addStockDocumentPageNumbers = (
   doc: jsPDF,
   look: PdfLook,
   // pageRight: where "Page x of y" ends (default: `right`, the right edge of the table, where the footer line ends)
-  o: { right: number; pageRight?: number; pageY: number; bottomY: number; footer: string }
+  // ranges: a report whose parts number their pages on their own (the General Ledger: every account restarts at "Page 1")
+  o: { right: number; pageRight?: number; pageY: number; bottomY: number; footer: string; ranges?: { start: number; end: number }[] }
 ) => {
   const pages = doc.getNumberOfPages();
   doc.setFont(look.font, "normal");
@@ -280,7 +332,9 @@ export const addStockDocumentPageNumbers = (
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
     doc.setFontSize(look.size.pdfBody);
-    doc.text(`Page ${i} of ${pages}`, o.pageRight ?? o.right, o.pageY, { align: "right" });
+    const part = o.ranges?.find((r) => i >= r.start && i <= r.end);
+    const label = part ? `Page ${i - part.start + 1} of ${part.end - part.start + 1}` : `Page ${i} of ${pages}`;
+    doc.text(label, o.pageRight ?? o.right, o.pageY, { align: "right" });
     doc.setFontSize(STOCK_DOCUMENT_PDF.footerSize);
     doc.text(o.footer, o.right, h - o.bottomY, { align: "right" });
   }

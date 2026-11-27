@@ -65,36 +65,39 @@ export const buildStockAdjustmentWorkbook = async ({
   // ---- company / heading (rows 1-2) ----
   ws.mergeCells("A1:H1");
   ws.getCell("A1").value = header.fconame;
-  ws.getCell("A1").font = levelFont("company", true, "inter");
+  ws.getCell("A1").font = levelFont("company", true);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:H2");
   ws.getCell("A2").value = heading;
-  ws.getCell("A2").font = levelFont("heading", false, "inter");
+  ws.getCell("A2").font = levelFont("heading", false);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  // ---- branch (left) and report info (right) - row 3 ----
-  ws.mergeCells("A3:H3");
-  ws.getCell("A3").value = `Branch : ${header.fbrname}`;
-  ws.getCell("A3").font = levelFont("body", false, "inter");
+  // a text "label : value" with the value in bold, as the print
+  const labelled = (label: string, value: string): ExcelJS.CellRichTextValue => ({
+    richText: [
+      { text: `${label} : `, font: levelFont("body", false) },
+      { text: value, font: levelFont("body", true) },
+    ],
+  });
+
+  // ---- the same layout as the print: Branch at the left, Entry No. in the middle, Date at the right end - row 3 ----
+  ws.mergeCells("A3:C3");
+  ws.getCell("A3").value = labelled("Branch", header.fbrname);
   ws.getCell("A3").alignment = { horizontal: "left" };
 
-  // the user and the time: bottom right of every printed page
-  setPrintedFooter(ws, reportInfo, "inter");
+  ws.mergeCells("D3:G3");
+  ws.getCell("D3").value = labelled("Entry No.", header.fdocno);
+  ws.getCell("D3").alignment = { horizontal: "center" };
 
-  // ---- entry no. / date - row 4, and the note when there is one - row 5 ----
-  ws.mergeCells("A4:H4");
-  ws.getCell("A4").value = `Entry No. : ${header.fdocno}      Date : ${dmmy(header.fdate)}`;
-  ws.getCell("A4").alignment = { horizontal: "left" };
+  ws.getCell("H3").value = labelled("Date", dmmy(header.fdate));
+  ws.getCell("H3").alignment = { horizontal: "right" };
 
-  let headRow = 5;
+  // the user and the time of the save ("Created By"), else of the print: bottom right of every printed page
+  if (header.fsavedby) setPrintedFooter(ws, header.fsavedby, "classic", "Created By");
+  else setPrintedFooter(ws, reportInfo);
 
-  if (header.fnote) {
-    ws.mergeCells("A5:H5");
-    ws.getCell("A5").value = `Note : ${header.fnote}`;
-    ws.getCell("A5").alignment = { horizontal: "left" };
-    headRow = 6;
-  }
+  const headRow = 4;
 
   // ---- column labels ----
   const head = ws.getRow(headRow);
@@ -109,7 +112,7 @@ export const buildStockAdjustmentWorkbook = async ({
     "Total Cost",
   ];
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col >= 5 ? "right" : "left" };
   });
@@ -161,8 +164,14 @@ export const buildStockAdjustmentWorkbook = async ({
     if (col === 8) cell.numFmt = COST_FORMAT;
   });
 
+  // the note after the Total row, as in the print (always printed, empty when there is no note)
+  const noteRow = ws.addRow([]);
+  ws.mergeCells(noteRow.number, 1, noteRow.number, 8);
+  noteRow.getCell(1).value = labelled("Note", header.fnote ?? "");
+  noteRow.getCell(1).alignment = { horizontal: "left" };
+
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

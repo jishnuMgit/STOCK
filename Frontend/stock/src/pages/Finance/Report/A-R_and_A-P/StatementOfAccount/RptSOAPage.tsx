@@ -5,9 +5,9 @@ import {
   buildHtml,
   printSoaReport,
   type PrintReport,
-} from "./PrintSOAReport";
-import { previewPrintedLine } from "../../../../../components/common/printHtml";
-import { buildSoaPdf } from "./downloadSoaPdf";
+} from "../../../../../components/Finance/Report/RptSOA/RptSOARpt";
+import { countPdfPages, previewPrintedLine } from "../../../../../components/common/printHtml";
+import { buildSoaPdf } from "../../../../../components/Finance/Report/RptSOA/RptSOAPdf";
 import { saveFile } from "./saveFile";
 import Header from "../../../../../components/common/Header";
 import type { PairSelectOption } from "../../../../../components/common/CustomLinkedPairSelect";
@@ -442,6 +442,12 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
     }
   };
 
+  // puts the "Page x of y" label on the Branch line of the first statement (its heading line when there is no branch)
+  const pageLabelScript =
+    "<script>(function(){var p=document.querySelector('.preview-page');" +
+    "var e=document.querySelector('.acc .br')||document.querySelector('.acc .h2');if(!p||!e)return;" +
+    "p.style.top=(e.getBoundingClientRect().top+window.scrollY)+'px';p.style.visibility='visible';})();</script>";
+
   const previewHtml = useMemo(() => {
     if (!preview) return "";
 
@@ -452,14 +458,50 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
     return html
       .replace(
         "</head>",
-        // 40px left / 20px right margin for the preview only
-        "<style>body{padding-left:40px;padding-right:20px}" +
+        // 40px left / 20px right margin for the preview only; the room at the top is for "Page x of y" (a browser draws the
+        // page margin box only when it prints, so the preview draws its own label at the top right)
+        "<style>body{padding-left:40px;padding-right:20px;padding-bottom:28px}" +
+          // "Page x of y" at the right end of the Branch line of the first statement (the right edge of the tables), as on the
+          // other reports; "Printed : ..." stays at the bottom right while the statements scroll
+          ".preview-page{position:absolute;right:20px;top:0;visibility:hidden;font:11px Inter,Arial,sans-serif;color:#000}" +
+          ".preview-printed{position:fixed;right:0;bottom:0;margin:0;padding:4px 20px;background:#fff;z-index:2}" +
           // the preview has no page breaks: a band shows where the next customer's statement starts
           ".acc + .acc::before{content:attr(data-stmt);display:block;margin:28px -20px 20px -40px;padding:6px 40px;" +
           "background:#eef1f6;border-top:1px dashed #8a97b0;border-bottom:1px dashed #8a97b0;color:#44506a;font-size:11px;font-weight:600}" +
           `${printed.css}</style></head>`,
       )
-      .replace("</body>", `${printed.line}</body>`);
+      .replace("</body>", `${printed.line}<div class="preview-page">Page 1 of 1</div>${pageLabelScript}</body>`);
+  }, [preview]);
+
+  // the real number of pages: the PDF of the report is made (the same page as Download) and its pages counted;
+  // until then the label says "Page 1 of 1"
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const pageCountRef = useRef(1);
+
+  const showPageCount = () => {
+    const label = frameRef.current?.contentDocument?.querySelector(".preview-page");
+    if (label) label.textContent = `Page 1 of ${pageCountRef.current}`;
+  };
+
+  useEffect(() => {
+    if (!preview) return;
+    let active = true;
+    pageCountRef.current = 1;
+
+    buildSoaPdf(preview.report)
+      .then(countPdfPages)
+      .then((pages) => {
+        if (!active || pages < 1) return;
+        pageCountRef.current = pages;
+        showPageCount();
+      })
+      .catch(() => {
+        /* the label stays "Page 1 of 1" */
+      });
+
+    return () => {
+      active = false;
+    };
   }, [preview]);
 
   // Alt+P prints, Alt+C clears, Escape closes the preview. Re-attached every
@@ -497,7 +539,9 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
 
               <iframe
                 title="Print Preview"
+                ref={frameRef}
                 srcDoc={previewHtml}
+                onLoad={showPageCount}
                 className="min-h-0 flex-1 border-0 bg-white"
               />
 

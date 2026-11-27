@@ -788,6 +788,22 @@ export const printBeginningBalance = async (
    The same body and the same checks as Print; answers with the .xlsx file.
 ========================================================= */
 
+// DD-MMM-YYYY of the date of the balance (the server holds it as yyyy-mm-dd... text or as a Date)
+const excelDate = (value: unknown): string => {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  if (value === null || value === undefined || value === "") return "";
+
+  if (value instanceof Date) {
+    return `${String(value.getDate()).padStart(2, "0")}-${months[value.getMonth()]}-${value.getFullYear()}`;
+  }
+
+  const [year, month, day] = String(value).slice(0, 10).split("-");
+  const monthName = months[Number(month) - 1];
+
+  return monthName ? `${day}-${monthName}-${year}` : String(value);
+};
+
 export const downloadBeginningBalanceExcel = async (
   req: AuthenticatedRequest,
   res: Response
@@ -804,7 +820,9 @@ export const downloadBeginningBalanceExcel = async (
     const buffer = await buildBeginningBalanceWorkbook({
       coName: report.header.fconame,
       heading: "Beginning Balance",
-      branch: `Branch : ${report.header.fbrname}`,
+      branch: report.header.fbrname,
+      date: excelDate(report.header.fdate),
+      savedBy: report.header.fsavedby,
       reportInfo,
       lines: report.lines,
     });

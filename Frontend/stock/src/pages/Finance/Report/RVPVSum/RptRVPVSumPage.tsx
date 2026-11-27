@@ -18,7 +18,7 @@ import {
   buildHtml,
   printRVPVSumReport,
   type PrintReport,
-} from "../../../../components/Finance/Report/RptRVPVSum/RptRVPVSumPrintReport";
+} from "../../../../components/Finance/Report/RptRVPVSum/RptRVPVSumRpt";
 import { buildRVPVSumPdf } from "../../../../components/Finance/Report/RptRVPVSum/RptRVPVSumPdf";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";

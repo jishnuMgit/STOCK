@@ -46,7 +46,7 @@ export const buildItemMovementWorkbook = async (report: ItemMovementReport): Pro
     : [{ width: 22 }, { width: 38 }, { width: 22 }, { width: 14 }, { width: 16 }, { width: 14 }];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, columnCount, 2, "inter");
+  addReportTitle(ws, report, report.txtBranch, columnCount, 2);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
@@ -58,7 +58,7 @@ export const buildItemMovementWorkbook = async (report: ItemMovementReport): Pro
   const firstNumberColumn = 4;
 
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col >= firstNumberColumn ? "right" : "left" };
   });
@@ -113,7 +113,7 @@ export const buildItemMovementWorkbook = async (report: ItemMovementReport): Pro
   }
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

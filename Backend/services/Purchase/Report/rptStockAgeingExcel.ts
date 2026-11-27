@@ -55,7 +55,7 @@ export const buildStockAgeingWorkbook = async (report: StockAgeingReport): Promi
   ];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 11, 3, "inter");
+  addReportTitle(ws, report, report.txtBranch, 11, 3);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
@@ -69,7 +69,7 @@ export const buildStockAgeingWorkbook = async (report: StockAgeingReport): Promi
     ...report.txtAgeLabels,
   ];
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = {
       horizontal: col >= FIRST_AGE_COLUMN ? "center" : col >= FIRST_NUMBER_COLUMN ? "right" : "left",
@@ -101,7 +101,7 @@ export const buildStockAgeingWorkbook = async (report: StockAgeingReport): Promi
   }
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

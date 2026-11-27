@@ -4,7 +4,7 @@
 // Total row at the end).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
-import { REPORT_FONT_SIZE, applyReportFont, font, thin } from "../../../utils/reportStyle.js";
+import { REPORT_FONT_SIZE, applyReportFont, font, levelFont, setPrintedFooter, thin } from "../../../utils/reportStyle.js";
 
 import type { BeginningBalancePrintLine } from "./beginningBalanceService.js";
 
@@ -12,6 +12,10 @@ export type BeginningBalanceExcelReport = {
   coName: string;
   heading: string;
   branch: string;
+  // the date of the balance (DD-MMM-YYYY)
+  date: string;
+  // "<user>  dd/mm/yyyy hh:mm" of the save: the page footer "Created By" (the print's own user and time when empty)
+  savedBy: string;
   reportInfo: string;
   lines: BeginningBalancePrintLine[];
 };
@@ -73,15 +77,25 @@ export const buildBeginningBalanceWorkbook = async (
   ws.getCell("A2").font = font(REPORT_FONT_SIZE.heading);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  // ---- branch (left) and report info (right) - row 3 ----
+  // ---- the same layout as the print: Branch at the left, Date at the right end - row 3 ----
+  const labelled = (label: string, value: string): ExcelJS.CellRichTextValue => ({
+    richText: [
+      { text: `${label} : `, font: levelFont("body", false) },
+      { text: value, font: levelFont("body", true) },
+    ],
+  });
+
   ws.mergeCells("A3:C3");
-  ws.getCell("A3").value = report.branch;
+  ws.getCell("A3").value = labelled("Branch", report.branch);
   ws.getCell("A3").alignment = { horizontal: "left" };
 
   ws.mergeCells("D3:E3");
-  ws.getCell("D3").value = report.reportInfo;
-  ws.getCell("D3").font = font(REPORT_FONT_SIZE.small);
+  ws.getCell("D3").value = labelled("Date", report.date);
   ws.getCell("D3").alignment = { horizontal: "right" };
+
+  // the user and the time of the save ("Created By"), else of the print: bottom right of every printed page
+  if (report.savedBy) setPrintedFooter(ws, report.savedBy, "classic", "Created By");
+  else setPrintedFooter(ws, report.reportInfo);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);

@@ -24,7 +24,7 @@ import {
   buildHtml,
   printBeginningStockReport,
   type PrintReport,
-} from "../../../components/Transaction/BeginningStock/RptBeginningStockPrint";
+} from "../../../components/Transaction/BeginningStock/RptBeginningStock";
 import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
 import { useMessageModal } from "../../../hooks/useMessageModal";
 import TransactionActions from "../../../components/common/TransactionActions";

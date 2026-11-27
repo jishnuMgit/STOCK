@@ -22,7 +22,7 @@ import {
   buildHtml,
   printExpenseSumReport,
   type PrintReport,
-} from "../../../../components/Finance/Report/RptExpenseSum/RptExpenseSumPrintReport";
+} from "../../../../components/Finance/Report/RptExpenseSum/RptExpenseSumRpt";
 import { buildExpenseSumPdf } from "../../../../components/Finance/Report/RptExpenseSum/RptExpenseSumPdf";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";

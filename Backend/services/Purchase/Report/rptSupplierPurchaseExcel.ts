@@ -63,12 +63,12 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
 
   ws.columns = [{ width: 14 }, { width: 10 }, { width: 22 }, { width: 18 }];
 
-  addReportTitle(ws, report, report.txtBranch, 4, undefined, "inter");
+  addReportTitle(ws, report, report.txtBranch, 4, undefined);
 
   const head = ws.getRow(4);
   head.values = ["Date", "Type", "Document No.", "Amount"];
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col >= 4 ? "right" : "left" };
   });
@@ -80,7 +80,7 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
     // ---- "Supplier : 70000   supplier1" ----
     const heading = ws.addRow([`Supplier : ${supplier.lkpSupplierID}   ${supplier.txtSupplierName}`]);
     ws.mergeCells(heading.number, 1, heading.number, 4);
-    heading.getCell(1).font = levelFont("group", true, "inter");
+    heading.getCell(1).font = levelFont("group", true);
     heading.getCell(1).alignment = { horizontal: "left" };
 
     for (const line of supplier.lines) {
@@ -97,7 +97,7 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
       cell.alignment = { horizontal: "right" };
     });
   }
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 };
 
 /* ---------------------------------------------------------
@@ -120,7 +120,7 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     { width: 16 }, // Total Cost
   ];
 
-  addReportTitle(ws, report, "", 8, undefined, "inter");
+  addReportTitle(ws, report, "", 8, undefined);
 
   ws.views = [{ state: "frozen", ySplit: 3 }];
   ws.pageSetup.printTitlesRow = "1:3";
@@ -162,7 +162,7 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
       "Unit Price", "Unit Cost", "Total Cost",
     ]);
     head.eachCell((cell, col) => {
-      cell.font = levelFont("columnHead", true, "inter");
+      cell.font = levelFont("columnHead", true);
       cell.border = thin;
       cell.alignment = { horizontal: col >= 5 ? "right" : "left" };
     });
@@ -189,7 +189,7 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     info([[`Disc. Amt. : ${doc.txtDiscAmt.toFixed(2)}`, 1, 8]]);
     info([[`Note : ${doc.txtNote}`, 1, 8]]);
   }
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 };
 
 export const buildSupplierPurchaseWorkbook = async (report: SupplierPurchaseReport): Promise<Buffer> => {

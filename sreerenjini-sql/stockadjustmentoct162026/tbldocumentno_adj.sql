@@ -19,11 +19,11 @@
 INSERT INTO dbo.tbldocumentno
     (fcoid, fbrid, fdoctype, fmoduleid, fdocnoprefix, fstartseqno, fseqnolen,
      fdocnolen, fstrictserialseqno, fseqnoincrementmode, fseqnoresetmode,
-     fprintaftersave, fpositionno, fcuserid, fcuserdate, fyear)
+     fprintaftersave, fcuserid, fcuserdate, fyear)
 SELECT b.fcoid, b.fbrid, 'ADJ', 'STK',
        'ADJ', '00001', 5,
        length('ADJ') + 5, true, 'Auto', 'Never',
-       0, 0, 'ADMIN', now(), '2026'
+       0, 'ADMIN', now(), '2026'
 FROM dbo.tblbranch b
 WHERE b.fcoid = '01'
   AND NOT EXISTS (

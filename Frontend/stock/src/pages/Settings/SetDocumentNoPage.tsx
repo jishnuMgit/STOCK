@@ -39,7 +39,6 @@ interface DocumentRow {
 
   lkpResetNo: string;
   chkPrintAfterSave: boolean;
-  txtPositionNo: number;
 }
 
 // ============================================================
@@ -428,7 +427,6 @@ const SetDocumentNo: React.FC = () => {
               chkPrintAfterSave:
                 existing?.chkPrintAfterSave === 1 ||
                 existing?.chkPrintAfterSave === true,
-              txtPositionNo: index + 1,
             };
           }),
         );
@@ -545,7 +543,6 @@ const SetDocumentNo: React.FC = () => {
               lkpMode: row.lkpMode || null,
               lkpResetNo: row.lkpResetNo || null,
               chkPrintAfterSave: row.chkPrintAfterSave ? 1 : 0,
-              txtPositionNo: row.txtPositionNo,
             })),
           }),
         },
@@ -729,7 +726,7 @@ const SetDocumentNo: React.FC = () => {
           <div className="p-3 ">
 
             <div className="grid grid-cols-1 gap-3 border-b border-slate-200 pb-3 sm:grid-cols-2
-             lg:grid-cols-[200px_1fr_1fr] lg:items-center lg:gap-4">
+             lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-4">
               {/* ===================================================
               YEAR
           ==================================================== */}
@@ -805,7 +802,7 @@ const SetDocumentNo: React.FC = () => {
               MODULE
               ==================================================== */}
 
-              <div className="flex w-full items-center gap-2 sm:justify-center">
+              <div className="flex w-full items-center gap-2 sm:justify-center lg:justify-end">
                 <label
                   htmlFor="lkpModule"
                   className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
@@ -850,19 +847,19 @@ const SetDocumentNo: React.FC = () => {
                       >
                         {/* DOCUMENT */}
 
-                        <th className="w-[20%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
+                        <th className="w-[28%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
                           Document
                         </th>
 
                         {/* PREFIX */}
 
-                        <th className="w-[9%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
                           Prefix
                         </th>
 
                         {/* START SEQ NO */}
 
-                        <th className="w-[13%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Start Seq. No.
                         </th>
 
@@ -874,26 +871,20 @@ const SetDocumentNo: React.FC = () => {
 
                         {/* MODE */}
 
-                        <th className="w-[10%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           + Mode
                         </th>
 
                         {/* RESET */}
 
-                        <th className="w-[10%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Reset No.
                         </th>
 
                         {/* PRINT AFTER SAVE */}
 
-                        <th className=" w-[15%] border-r border-slate-200 px-1 text-centerwhitespace-nowrap">
+                        <th className="w-[12%] pl-[2px] pr-1 text-left whitespace-nowrap">
                           Print After Save
-                        </th>
-
-                        {/* POSITION NO */}
-
-                        <th className="w-[13%] px-1 text-center whitespace-nowrap">
-                          Position No.
                         </th>
                       </tr>
                     </thead>
@@ -1083,59 +1074,42 @@ const SetDocumentNo: React.FC = () => {
               PRINT AFTER SAVE
           ================================================= */}
 
-                          <td className={`border-r border-t border-slate-200 text-center ${cellFocusClass}`}
-                          >
-                            <input
-                              id={`chkPrintAfterSave_${row.id}`}
-                              name="chkPrintAfterSave"
-                              type="checkbox"
-                              checked={row.chkPrintAfterSave}
-                              onChange={(e) =>
-                                handleRowChange(
-                                  row.id,
-                                  "chkPrintAfterSave",
-                                  e.target.checked,
-                                )
-                              }
-                              className="h-[16px] w-[16px] cursor-pointer accent-blue-600"
-                            />
-                          </td>
-
-                          {/* =================================================
-              POSITION NO
-          ================================================= */}
-
-                          <td className={`border-t border-slate-200 px-1 text-center ${cellFocusClass}`}
-                          >
+                          <td className={`border-t border-slate-200 text-center ${cellFocusClass}`}>
                             <div className="flex items-center">
-                              <input
-                                id={`txtPositionNo_${row.id}`}
-                                onFocus={selectOnFocus}
-                                name="txtPositionNo"
-                                type="number"
-                                value={row.txtPositionNo}
-                                onChange={(e) =>
-                                  handleRowChange(
-                                    row.id,
-                                    "txtPositionNo",
-                                    Number(e.target.value),
-                                  )
-                                }
-                                className="w-full bg-transparent text-right text-[13px] text-slate-600 outline-none"
-                              />
+                              {/* the same space as the X, so the box stays in the middle */}
+                              <span className="w-[24px] shrink-0" />
+
+                              <span className="flex flex-1 items-center justify-center">
+                                <input
+                                  id={`chkPrintAfterSave_${row.id}`}
+                                  name="chkPrintAfterSave"
+                                  type="checkbox"
+                                  checked={row.chkPrintAfterSave}
+                                  onChange={(e) =>
+                                    handleRowChange(
+                                      row.id,
+                                      "chkPrintAfterSave",
+                                      e.target.checked,
+                                    )
+                                  }
+                                  className="h-[16px] w-[16px] cursor-pointer accent-blue-600"
+                                />
+                              </span>
 
                               {/* the X of the row, at the right end */}
-                              {perms.delete && (
-                                <button
-                                  type="button"
-                                  tabIndex={-1}
-                                  onClick={() => handleDeleteRow(row)}
-                                  className="ml-1 inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-slate-400 hover:text-red-500"
-                                  aria-label={`Delete ${row.lkpDocument}`}
-                                >
-                                  <X size={12} />
-                                </button>
-                              )}
+                              <span className="flex w-[24px] shrink-0 items-center justify-center">
+                                {perms.delete && (
+                                  <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => handleDeleteRow(row)}
+                                    className="inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-slate-400 hover:text-red-500"
+                                    aria-label={`Delete ${row.lkpDocument}`}
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                )}
+                              </span>
                             </div>
                           </td>
                         </tr>

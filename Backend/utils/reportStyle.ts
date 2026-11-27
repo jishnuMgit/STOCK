@@ -121,7 +121,17 @@ export const addReportTitle = (
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A3:${last}3`);
-  ws.getCell("A3").value = branch;
+  // "Branch : Jeddah" with the name in bold, as in the print and the PDF
+  const colon = branch.indexOf(" : ");
+  ws.getCell("A3").value =
+    colon < 0
+      ? branch
+      : {
+          richText: [
+            { text: branch.slice(0, colon + 3), font: font(size.body, false, look) },
+            { text: branch.slice(colon + 3), font: font(size.body, true, look) },
+          ],
+        };
   ws.getCell("A3").font = font(size.body, false, look);
   ws.getCell("A3").alignment = { horizontal: "left" };
 
@@ -130,11 +140,12 @@ export const addReportTitle = (
 };
 
 // The report info ("<user>  dd/mm/yyyy hh:mm") at the bottom right of every printed page: "Printed : ..." in the page footer
-export const setPrintedFooter = (ws: ExcelJS.Worksheet, info: string, look: ReportLook = "classic") => {
+// label: "Printed" (the default) or "Created By" (the stock documents: the user and the time of the first save)
+export const setPrintedFooter = (ws: ExcelJS.Worksheet, info: string, look: ReportLook = "classic", label = "Printed") => {
   const fontName = lookFont(look);
   const size = lookSize(look).small;
   // in a header / footer text an "&" has to be written twice
-  ws.headerFooter.oddFooter = `&R&"${fontName},Regular"&${size} Printed : ${String(info).replace(/&/g, "&&")}`;
+  ws.headerFooter.oddFooter = `&R&"${fontName},Regular"&${size} ${label} : ${String(info).replace(/&/g, "&&")}`;
 };
 
 // Call it LAST, when the worksheet is full: every cell gets the report font, so the table is in the same font

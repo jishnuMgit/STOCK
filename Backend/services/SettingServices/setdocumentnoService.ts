@@ -27,8 +27,8 @@ export async function getDocumentNoListService(
       CALL dbo.sp_pagesetdocumentno(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
-        $11::varchar, $12::smallint, $13::smallint, $14::varchar,
-        $15::varchar, $16::timestamp, $17::refcursor
+        $11::varchar, $12::smallint, $13::varchar,
+        $14::varchar, $15::timestamp, $16::refcursor
       )
       `,
       [
@@ -38,7 +38,7 @@ export async function getDocumentNoListService(
         lkpBranch,
         lkpModule,
         null, null, null, null, null,
-        null, null, null, null,
+        null, null, null,
         null,
         null,
         cursorName,
@@ -74,7 +74,6 @@ export interface DocumentNoRowPayload {
   lkpMode: string | null;
   lkpResetNo: string | null;
   chkPrintAfterSave: number;
-  txtPositionNo: number;
 }
 
 export async function saveDocumentNoListService(
@@ -117,8 +116,8 @@ export async function saveDocumentNoListService(
         CALL dbo.sp_pagesetdocumentno(
           $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
           $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
-          $11::varchar, $12::smallint, $13::smallint, $14::varchar,
-          $15::varchar, $16::timestamp, $17::refcursor
+          $11::varchar, $12::smallint, $13::varchar,
+          $14::varchar, $15::timestamp, $16::refcursor
         )
         `,
         [
@@ -134,7 +133,6 @@ export async function saveDocumentNoListService(
           row.lkpMode,
           row.lkpResetNo,
           row.chkPrintAfterSave,
-          row.txtPositionNo,
           mode === "M" ? row.lkpDocument : null,
           PstrUserID,
           serverDate,
@@ -179,8 +177,8 @@ export async function deleteDocumentNoRowService(
       CALL dbo.sp_pagesetdocumentno(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
-        $11::varchar, $12::smallint, $13::smallint, $14::varchar,
-        $15::varchar, $16::timestamp, $17::refcursor
+        $11::varchar, $12::smallint, $13::varchar,
+        $14::varchar, $15::timestamp, $16::refcursor
       )
       `,
       [
@@ -190,7 +188,7 @@ export async function deleteDocumentNoRowService(
         lkpBranch,
         lkpModule,
         null, null, null, null, null,
-        null, null, null,
+        null, null,
         lkpDocument,
         null,
         null,

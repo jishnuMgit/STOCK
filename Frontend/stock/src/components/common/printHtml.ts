@@ -10,6 +10,13 @@ export const esc = (v: unknown) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+// "Branch : Jeddah" with the name in bold ("Branch : <b>Jeddah</b>"); a text without the " : " is only escaped
+export const branchLineHtml = (text: unknown) => {
+  const t = String(text ?? "");
+  const i = t.indexOf(" : ");
+  return i < 0 ? esc(t) : `${esc(t.slice(0, i))} : <b>${esc(t.slice(i + 3))}</b>`;
+};
+
 // text placed inside a CSS string ("...") in the print stylesheet
 export const cssStr = (v: unknown) =>
   String(v ?? "")

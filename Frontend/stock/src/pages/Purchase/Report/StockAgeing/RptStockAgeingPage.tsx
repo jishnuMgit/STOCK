@@ -7,7 +7,7 @@ import {
   buildHtml,
   printStockAgeingReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptStockAgeing/RptStockAgeingPrintReport";
+} from "../../../../components/Purchase/Report/RptStockAgeing/RptStockAgeingRpt";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";

@@ -1,13 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../../../components/common/Header";
+import ReportPreview from "../../../../components/common/ReportPreview";
 import {
   buildHtml,
   printCustomerListReport,
   type PrintReport,
-} from "./PrintCustomerListReport";
-import { previewPrintedLine } from "../../../../components/common/printHtml";
-import { buildCustomerListPdf } from "./downloadCustomerListPdf";
-import { saveFile } from "./saveFile";
+} from "../../../../components/Finance/Report/RptCustomerList/RptCustomerListRpt";
+import { buildCustomerListPdf } from "../../../../components/Finance/Report/RptCustomerList/RptCustomerListPdf";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 // ============================================================
@@ -39,56 +38,6 @@ const apiFetch = (url: string, init: RequestInit = {}) => {
 };
 
 // ============================================================
-// RADIO (Report File, inside the Print Preview)
-// ============================================================
-
-type RadioOptionProps = {
-  name: string;
-  value: string;
-  label: string;
-  checked: boolean;
-  disabled?: boolean;
-  onChange: () => void;
-};
-
-const CustomRadio: React.FC<RadioOptionProps> = ({
-  name,
-  value,
-  label,
-  checked,
-  disabled = false,
-  onChange,
-}) => (
-  <label
-    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
-      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-    }`}
-  >
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      disabled={disabled}
-      onChange={onChange}
-      className="sr-only"
-    />
-    <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
-    >
-      <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
-  </label>
-);
-
-// ============================================================
 // PAGE
 // ============================================================
 
@@ -105,7 +54,6 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
   const [printing, setPrinting] = useState(false);
 
   // rdgReportFile (inside the Print Preview): what Download saves
-  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
 
   // print preview: shown after Print. Print there sends it to the printer,
   // Download saves the "Report File" choice
@@ -214,70 +162,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
     }
   };
 
-  // Print in the preview: the browser print dialog (printer)
-  const handlePreviewPrint = () => {
-    if (!preview || printing) return;
-    try {
-      printCustomerListReport(preview.report);
-    } catch {
-      notify.error("Could not open the print view");
-    }
-  };
-
-  // Download in the preview: saves the chosen file ("Save as" window, so the
-  // browser does not open it afterwards).
-  // A double click must not start two saves (state is not updated yet on the
-  // second click, so a ref is used).
-  const downloading = useRef(false);
-
-  const handlePreviewOk = async () => {
-    if (!preview || printing || downloading.current) return;
-    downloading.current = true;
-    const { report, fileBase, accountIds } = preview;
-    const asPdf = reportFile === "PDF";
-
-    setPrinting(true);
-    try {
-      const blob = asPdf
-        ? await buildCustomerListPdf(report)
-        : await fetchExcel(accountIds);
-      if (!blob) return; // the error is already shown
-
-      const kind = asPdf ? "pdf" : "xlsx";
-      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
-      if (saved) {
-      
-        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
-          setPreview(null); // cancelled "Save as": the preview stays
-      }
-    } catch {
-      notify.error(
-        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
-      );
-    } finally {
-      downloading.current = false;
-      setPrinting(false);
-    }
-  };
-
-  const previewHtml = useMemo(() => {
-    if (!preview) return "";
-
-    const html = buildHtml(preview.report);
-    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
-    const printed = previewPrintedLine(html);
-
-    return html
-      .replace(
-        "</head>",
-        // 40px left / 20px right margin for the preview only
-        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
-      )
-      .replace("</body>", `${printed.line}</body>`);
-  }, [preview]);
-
   const handleClose = () => {
-    setReportFile("Excel");
     setPreview(null);
     if (onClose) onClose();
     else window.history.back();
@@ -330,67 +215,17 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
         </main>
       </div>
 
-      {/* Print preview */}
+      {/* the Print Preview (after Print) */}
       {preview && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
-          <div className="flex h-[90vh] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
-            <Header Name="Print Preview" />
-
-            <iframe
-              title="Print Preview"
-              srcDoc={previewHtml}
-              className="min-h-0 flex-1 border-0 bg-white"
-            />
-
-            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
-              <div className="flex gap-3">
-                <button
-                  id="btnPreviewPrint"
-                  type="button"
-                  onClick={handlePreviewPrint}
-                  disabled={printing}
-                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <u>P</u>rint
-                </button>
-                <button
-                  id="btnPreviewOk"
-                  type="button"
-                  autoFocus
-                  onClick={handlePreviewOk}
-                  disabled={printing}
-                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <u>D</u>ownload
-                </button>
-              </div>
-
-              {/* Report File: what Download saves */}
-              <div
-                id="rdgReportFile"
-                className="relative  flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
-              >
-                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                   File Format
-                </span>
-                <CustomRadio
-                  name="rdgReportFile"
-                  value="Excel"
-                  label="Excel"
-                  checked={reportFile === "Excel"}
-                  onChange={() => setReportFile("Excel")}
-                />
-                <CustomRadio
-                  name="rdgReportFile"
-                  value="PDF"
-                  label="PDF"
-                  checked={reportFile === "PDF"}
-                  onChange={() => setReportFile("PDF")}
-                />
-              </div>
-            </footer>
-          </div>
-        </div>
+        <ReportPreview
+          showClose={false}
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printCustomerListReport(preview.report)}
+          buildPdf={() => buildCustomerListPdf(preview.report)}
+          fetchExcel={() => fetchExcel(preview.accountIds)}
+          onClose={() => setPreview(null)}
+        />
       )}
 
       {/* Draw a white checkmark on checked boxes. */}

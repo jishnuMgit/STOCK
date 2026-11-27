@@ -7,7 +7,7 @@ import {
   buildHtml,
   printStockVerificationReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptStockVerification/RptStockVerificationPrintReport";
+} from "../../../../components/Purchase/Report/RptStockVerification/RptStockVerificationRpt";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";

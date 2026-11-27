@@ -93,7 +93,7 @@ const CommonTableSelect = ({
   onKeyDown,
   onMenuOpen,
   onMenuClose,
-  menuPlacement = "auto", // opens upward when there is not room below (the list is tall: header + up to 10 rows)
+  menuPlacement = "bottom", // always opens downward (a page can pass "auto" - a grid cell near the bottom of the window - to open upward when there is not room below)
   filterOption,
   borderColor = "#CBD5E1",
   hoverBorderColor = "#94A3B8",
@@ -253,6 +253,8 @@ const CommonTableSelect = ({
     menuPortal: (base) => ({
       ...base,
       zIndex: menuZIndex,
+      // an absolute list in the portal is placed from the box's left in the window, not in the page: add the page's horizontal scroll
+      ...(menuPortalTarget && menuPlacement === "bottom" && typeof window !== "undefined" ? { marginLeft: window.scrollX } : {}),
     }),
 
     menuList: (base) => ({
@@ -353,9 +355,10 @@ const CommonTableSelect = ({
       isLoading={isLoading}
       noOptionsMessage={noOptionsMessage}
       menuPortalTarget={menuPortalTarget}
-      menuPosition={menuPortalTarget ? "fixed" : undefined}
-      // opens upward unless the whole list fits below (react-select otherwise shrinks it into the space left below)
-      minMenuHeight={parseFloat(menuMaxHeight)}
+      // a "fixed" menu is flipped upward by react-select whenever the window has no room below; an "absolute" one (in the
+      // portal) stays below the box and the page scrolls to it
+      menuPosition={menuPortalTarget && menuPlacement !== "bottom" ? "fixed" : undefined}
+      minMenuHeight={parseFloat(menuMaxHeight)} // with "auto": opens upward unless the whole list fits below
       menuShouldScrollIntoView={false}
       getOptionLabel={(option) =>
         String(valueKey ? (option[valueKey] ?? option.label) : option.label)
@@ -525,6 +528,8 @@ export const CustomTableSelect = ({
     menuPortal: (base) => ({
       ...base,
       zIndex: menuZIndex,
+      // an absolute list in the portal is placed from the box's left in the window, not in the page: add the page's horizontal scroll
+      ...(menuPortalTarget && typeof window !== "undefined" ? { marginLeft: window.scrollX } : {}),
     }),
 
     menuList: (base) => ({
@@ -591,9 +596,9 @@ export const CustomTableSelect = ({
       isSearchable={isSearchable}
       isDisabled={isDisabled}
       menuPortalTarget={menuPortalTarget}
-      menuPosition={menuPortalTarget ? "fixed" : undefined}
-      // opens upward when there is not room below (the list is tall: header + up to 10 rows), like the pair select
-      menuPlacement="auto"
+      menuPosition={undefined} // "absolute": stays below the box (a "fixed" menu is flipped upward when the window has no room below)
+      // always opens downward, like the pair select
+      menuPlacement="bottom"
       minMenuHeight={220}
       menuShouldScrollIntoView={false}
       getOptionLabel={(option) => option.label}

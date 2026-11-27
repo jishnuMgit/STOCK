@@ -3,20 +3,21 @@
 //   A4 portrait. Fast / Slow Moving: Item ID / Item Name / Item Group Name / Moved Qty. / Moved Value / Stock and a
 //   Total row. Non Moving: Item ID / Item Name / Item Group / Stock (no total) - the old rptItemMovementrpt and
 //   rptItemNonMovingrpt.
-// Column labels repeat on every page; "Page x of y" top right; the company, the heading, the branch and the
-// report info at the top of every page.
+// Column labels repeat on every page; "Page x of y" on a line of its own under the heading; the company, the heading
+// and the branch at the top of every page; "Printed : ..." at the bottom right (the stock look, common/reportPdf.ts).
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  addPageNumbers,
-  drawReportTitle,
-  pdfHeadStyles,
+  STOCK_DOCUMENT_PDF,
+  addStockDocumentPageNumbers,
+  drawStockReportTitle,
   pdfMargin,
-  pdfTableStyles,
-  pdfTableTop,
   registerReportPdfFont,
+  stockDocumentTable,
+  stockReportTableTop,
 } from "../../../common/reportPdf";
+import { REPORT_STYLE } from "../../../common/reportStyle";
 
 import {
   FIRST_NUMBER_COLUMN,
@@ -25,7 +26,7 @@ import {
   formatValue,
   isNonMoving,
   type PrintReport,
-} from "./RptItemMovementPrintReport";
+} from "./RptItemMovementRpt";
 
 export const buildItemMovementPdf = async (report: PrintReport): Promise<Blob> => {
   const nonMoving = isNonMoving(report);
@@ -36,7 +37,7 @@ export const buildItemMovementPdf = async (report: PrintReport): Promise<Blob> =
   const pageW = 210;
   const margin = pdfMargin(15);
   const usable = pageW - margin.left - margin.right;
-  const tableTop = pdfTableTop(margin);
+  const tableTop = stockReportTableTop(margin);
 
   const right = { halign: "right" as const };
   const bold = { fontStyle: "bold" as const };
@@ -89,7 +90,7 @@ export const buildItemMovementPdf = async (report: PrintReport): Promise<Blob> =
   }
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch, look);
+  const drawTitle = () => drawStockReportTitle(doc, pageW, margin, report, report.txtBranch, look);
 
   autoTable(doc, {
     theme: "plain",
@@ -103,15 +104,22 @@ export const buildItemMovementPdf = async (report: PrintReport): Promise<Blob> =
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: pdfTableStyles(look),
-    headStyles: pdfHeadStyles(look),
+    // the stock look (common/reportPdf.ts, STOCK_DOCUMENT_PDF): the cell space, the thin light lines drawn once
+    ...stockDocumentTable(look, STOCK_DOCUMENT_PDF.cellPaddingX, STOCK_DOCUMENT_PDF.cellPaddingX),
     columnStyles,
     head,
     body,
     didDrawPage: drawTitle,
   });
 
-  addPageNumbers(doc, pageW, margin, look);
+  // "Page x of y" on a line of its own under the heading, and "Printed : ..." at the bottom right of every page
+  addStockDocumentPageNumbers(doc, look, {
+    right: pageW - margin.right,
+    pageRight: pageW - margin.right - STOCK_DOCUMENT_PDF.shiftLeft,
+    pageY: margin.top + 20 + REPORT_STYLE.pdf.titleGap,
+    bottomY: margin.bottom - 6,
+    footer: `Printed : ${report.txtReportInfo}`,
+  });
 
   return doc.output("blob");
 };
