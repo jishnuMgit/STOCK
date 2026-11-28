@@ -6,7 +6,7 @@ const Header = ({ Name }: { Name: string }) => {
 
   return (
     <header className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
-      <h1 className="ml-4 text-[17px] font-semibold">
+      <h1 className="ml-[10px] text-[17px] font-semibold">
         {Name}
       </h1>
 

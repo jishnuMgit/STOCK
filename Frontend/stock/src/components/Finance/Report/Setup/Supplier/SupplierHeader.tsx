@@ -134,7 +134,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
             {/* TITLE */}
 
             <div className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-slate-300 bg-[#a3dfc0] pr-1">
-                <h1 className="ml-1.25 text-[17px] font-semibold text-slate-700">
+                <h1 className="ml-[10px] text-[17px] font-semibold text-slate-700">
                     Supplier
                 </h1>
 
