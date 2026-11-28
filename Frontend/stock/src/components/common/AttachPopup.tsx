@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MdAttachFile, MdClose, MdVisibility } from "react-icons/md";
-import { toast } from "react-toastify";
 import ActionButton from "./ActionButton";
 import CloseButton from "./CloseButton";
-import { useNavigate } from "react-router-dom";
+import { useMessageModal } from "../../hooks/useMessageModal";
 
 // ============================================================
 // TYPES (generic - map your API types to these in the caller)
@@ -194,6 +193,7 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
     maxSaveMB = 250,
     maxNoteLength = 200,
 }) => {
+    const { notify } = useMessageModal(headerName);
     const maxSaveBytes = maxSaveMB * 1024 * 1024;
 
     const [rows, setRows] = useState<AttachRow[]>(() => initialRows(attachments, minRows));
@@ -206,8 +206,6 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pickingKeyRef = useRef<number | null>(null);
     const urlsRef = useRef<Set<string>>(new Set());
-
-    const navigate = useNavigate();
 
     // Release every object URL when the popup unmounts.
     useEffect(() => {
@@ -306,7 +304,7 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
             );
             setPreviewRow({ ...row, previewUrl, previewBlob: blob });
         } catch (err) {
-            toast.error(
+            notify.error(
                 err instanceof Error ? err.message : "Unable to load the attachment preview.",
             );
         } finally {
@@ -325,7 +323,7 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
         pickingKeyRef.current = null;
         if (!file || key === null) return;
         if (file.size > maxSaveBytes) {
-            toast.error(`Attachment files cannot exceed ${maxSaveMB} MB.`);
+            notify.error(`Attachment files cannot exceed ${maxSaveMB} MB.`);
             return;
         }
 
@@ -400,7 +398,7 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
         );
 
         if (changedRows.length === 0) {
-            toast.error("Attach a file or add a note before saving.");
+            notify.error("Attach a file or add a note before saving.");
             return;
         }
 
@@ -409,7 +407,7 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
             0,
         );
         if (totalSize > maxSaveBytes) {
-            toast.error(`Combined attachment files cannot exceed ${maxSaveMB} MB per save.`);
+            notify.error(`Combined attachment files cannot exceed ${maxSaveMB} MB per save.`);
             return;
         }
 
@@ -432,10 +430,10 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
                 })),
             );
             await onSave?.(payload);
-            toast.success("Saved successfully");
+            notify.success("Saved successfully");
             saved = true;
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Unable to save documents.");
+            notify.error(err instanceof Error ? err.message : "Unable to save documents.");
         } finally {
             setSaving(false);
             if (saved) onClose?.();
@@ -474,9 +472,11 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
                         {headerName}
                     </h1>
 
-                    <div className="ml-auto">
-                        <CloseButton onClose={() => navigate("/")} />
-                    </div>
+                    {onClose && (
+                        <div className="ml-auto">
+                            <CloseButton onClose={onClose} />
+                        </div>
+                    )}
                 </header>
 
                 <section className="px-3.5 pb-3 pt-3">

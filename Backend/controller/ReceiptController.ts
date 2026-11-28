@@ -869,7 +869,7 @@ export const saveAttachments = async (
         await client.query(
           `INSERT INTO dbo.tblfindocumentattach
              ("fCoID","fYear","fBrID","fDocType","fDocNo","fSlNo",
-              "fNote","fDoxName","fDox","fDoxType","fSUserID","fSUserDate")
+              "fNote","fDoxName","fDox","fDoxType","fcUserID","fcUserDate")
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())`,
           [...key, r.slNo, note, fileName, bytes, fileType, pstrUserID],
         );
