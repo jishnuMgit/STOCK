@@ -187,7 +187,7 @@ const StockAdjustmentHeader: React.FC = () => {
           TITLE
       ====================================================== */}
 
-      <header className="flex h-6.5 items-center justify-start pl-6 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
+      <header className="flex h-6.5 items-center justify-start pl-6 bg-[#78d4a4] text-[18px] font-semi-bold text-slate-700">
       Stock Adjustment
     </header>
 

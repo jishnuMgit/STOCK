@@ -20,22 +20,21 @@ import {
 } from "../../../../controller/ReceiptController.js";
 
 import { requireReceiptContext } from "../../../../middleware/receiptContext.js";
+import { getAttachmentFile, getAttachments, saveAttachments } from "../../../../controller/common/AttachementController.js";
 
 const router = express.Router();
 
 router.use(requireReceiptContext);
-
 router.get("/getPayment", getPayment);
-
 router.post("/getPaymentType", getReceiptType);
-
 router.post("/getDocNo", getPaymentDocNo);
-
 router.post("/getDivID", getDivID);
-
 router.post("/savePayment", savePayment);
-
 router.post("/modifyPayment", modifyPayment);
+
+router.get("/attachments", getAttachments);
+router.get("/attachments/file", getAttachmentFile);
+router.post("/attachments/save", saveAttachments);
 
 router.get("/get/data", GetPaymentDatas);
 router.post("/get/data", GetPaymentDatas);

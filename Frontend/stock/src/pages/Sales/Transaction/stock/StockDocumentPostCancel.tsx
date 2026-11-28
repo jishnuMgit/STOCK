@@ -61,7 +61,7 @@ const StockDocumentPostCancel: React.FC = () => {
               h-[36px]
               items-center
               justify-start
-              bg-[#9fdfbc]
+              bg-[#78d4a4]
               pl-[12px]
               text-[18px]
               font-semibold

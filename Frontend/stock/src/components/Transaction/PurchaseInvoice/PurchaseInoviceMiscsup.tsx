@@ -128,7 +128,7 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({
         className="w-[500px] overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800 shadow-xl"
       >
         {/* TITLE */}
-        <div className="relative flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
+        <div className="relative flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#78d4a4]">
           <h1
             id="miscSupTitle"
             className="ml-[20px] text-[17px] font-semibold text-slate-700"

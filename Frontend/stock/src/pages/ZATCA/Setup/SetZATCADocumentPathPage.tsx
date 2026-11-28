@@ -226,7 +226,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
       {pickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-3">
           <div className="w-full max-w-120 border border-gray-400 bg-white">
-            <header className="flex h-7.5 items-center bg-[#9fdfbc]">
+            <header className="flex h-7.5 items-center bg-[#78d4a4]">
               <h2 className="ml-4 text-[17px] font-semibold text-[#374151]">
                 Select Folder
               </h2>

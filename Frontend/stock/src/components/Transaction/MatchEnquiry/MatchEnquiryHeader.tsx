@@ -122,7 +122,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
           items-center
           border-b
           border-slate-300
-          bg-[#a3dfc0]
+          bg-[#78d4a4]
           pr-2
         "
       >

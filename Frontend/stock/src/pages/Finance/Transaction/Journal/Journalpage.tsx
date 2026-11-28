@@ -387,6 +387,17 @@ const JournalPage: React.FC = () => {
     [],
   );
 
+  const handleRowDelete = useCallback((id: number) => {
+    setRows((currentRows) => {
+      const remainingRows = currentRows
+        .filter((row) => row.id !== id)
+        .map((row, index) => ({ ...row, id: index + 1 }));
+      const minimumRows = createRows();
+
+      return [...remainingRows, ...minimumRows.slice(remainingRows.length)];
+    });
+  }, []);
+
   /* =======================================================
      TABLE ESCAPE -> NOTE
   ======================================================= */
@@ -809,6 +820,7 @@ const JournalPage: React.FC = () => {
             ref={journalTableRef}
             rows={rows}
             handleRowChange={handleRowChange}
+            onRowDelete={handleRowDelete}
             onFieldEnter={handleTableEnter}
             onTableEscape={handleTableEscape}
             onRowFocus={handleRowFocus}

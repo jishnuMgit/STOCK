@@ -133,8 +133,8 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
         <>
             {/* TITLE */}
 
-            <div className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-slate-300 bg-[#a3dfc0] pr-1">
-                <h1 className="ml-1.25 text-[17px] font-semibold text-slate-700">
+            <div className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-slate-300 bg-[#78d4a4] pr-1">
+                <h1 className="ml-[10px] text-[17px] font-semibold text-slate-700">
                     Supplier
                 </h1>
 
@@ -154,7 +154,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
 
             <div className=" border-b border-slate-200 px-3 py-3 sm:px-5 lg:px-6">
                 <div
-                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_80px_150px_minmax(0,1fr)]
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_80px_80px_minmax(0,1fr)]
       lg:items-end lg:gap-4"
                 >
                     {/* NEW SUPPLIER ID */}
@@ -237,7 +237,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
 
                     {/* HAVE DIVISION */}
 
-                    <div className="relative -left-1.25 w-full">
+                    <div className="relative w-full">
                         <label
                             htmlFor="lkpHaveDivision"
                             className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
@@ -264,7 +264,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
 
                     {/* BUSINESS TYPE */}
 
-                    <div className="relative -left-3.25 w-[50%]">
+                    <div className="relative w-full">
                         <label
                             htmlFor="lkpBusinessType"
                             className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
@@ -290,7 +290,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
                     </div>
 
                     {/* PARENT ACCOUNT */}
-                    <div className="grid grid-cols-[30%_minmax(0,1fr)] items-end gap-2.5 sm:col-span-2 lg:col-span-1">
+                    <div className="grid grid-cols-[24%_minmax(0,1fr)] items-end gap-1 sm:col-span-2 lg:col-span-1">
                         {/* PARENT ACCOUNT ID */}
 
                         <div id="glIdBox" className="w-full">

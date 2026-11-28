@@ -614,7 +614,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
       <div className="flex w-full max-w-[1200px] flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
         <div className="flex w-full max-w-[1200px] flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
           <section className="flex min-h-0 w-full flex-col bg-white -mb-3">
-            <div className="relative flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
+            <div className="relative flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#78d4a4]">
               <h1 className="ml-[20px] text-[17px] font-semibold text-slate-700">
                 Purchase Expense
               </h1>
