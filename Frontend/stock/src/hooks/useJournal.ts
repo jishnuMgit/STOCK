@@ -8,6 +8,12 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const JOURNAL_BASE = "/journal";
 
+/* doc type sent to the shared AttachmentController */
+export const JOURNAL_DOC_TYPE = "JV";
+
+/* attachments base, used as useDocAttachments(JOURNAL_ATTACH_BASE) */
+export const JOURNAL_ATTACH_BASE = JOURNAL_BASE;
+
 // TODO: backend endpoint still to be created: GET ?brId&docType -> { data: { docNo } }
 const NEXT_DOC_NO_PATH = "/journal/next-doc-no";
 

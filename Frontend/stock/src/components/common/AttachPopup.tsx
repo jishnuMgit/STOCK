@@ -636,10 +636,10 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
                         aria-labelledby="attach-preview-title"
                         className="flex max-h-full w-full max-w-200 flex-col overflow-hidden rounded-md border border-[#91a7bb] bg-white shadow-xl"
                     >
-                        <div className="flex h-9.5 shrink-0 items-center justify-between bg-[#9fdfbc] px-3">
+                        <div className="flex h-9.5 shrink-0 items-center justify-between bg-[#78d4a4] px-3">
                             <h2
                                 id="attach-preview-title"
-                                className="truncate text-[14px] font-semibold text-[#24364d]"
+                                className="truncate text-[14px] font-semibold text-[#24364d] ml-[10px]"
                             >
                                 Preview - {previewRow.fileName}
                             </h2>
@@ -647,7 +647,7 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
                                 type="button"
                                 aria-label="Close preview"
                                 onClick={closePreview}
-                                className="rounded p-1 text-[#24364d] hover:bg-white/40"
+                                className="rounded p-1 text-[#24364d] hover:bg-white/40 cursor-pointer"
                             >
                                 <MdClose size={19} />
                             </button>
