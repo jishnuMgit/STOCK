@@ -603,7 +603,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
           <Header Name="Currency" />
 
           {/* FORM */}
-          <div className="p-3 m-3">
+          <div className="p-3 mb-3">
             <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
               <div className="h-full overflow-y-auto overflow-x-hidden">
                 <table className="w-full table-fixed border-collapse text-[12px]">

@@ -1,29 +1,28 @@
 // RptSupplierPurchasePdf.ts
 // The Supplier Purchase report as a PDF (returned as a Blob; saveFile.ts saves it). The same two layouts as
-// the printed report (RptSupplierPurchasePrintReport.ts): the Summary on A4 portrait (a block per supplier) and
+// the printed report (RptSupplierPurchaseRpt.ts): the Summary on A4 portrait (a block per supplier) and
 // the Detailed on A4 landscape (a block per document).
 // "Page x of y" top right; the company, the heading and the report info at the top of every page.
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  addPageNumbers,
+  STOCK_DOCUMENT_PDF,
+  addStockDocumentPageNumbers,
   autoTableKeepBlocks,
-  drawReportTitle,
+  drawStockReportTitle,
   pdfGroupStyles,
-  pdfHeadStyles,
-  pdfLabelFontSize,
   pdfMargin,
-  pdfTableStyles,
-  pdfTableTop,
   registerReportPdfFont,
+  stockDocumentTable,
+  stockReportTableTop,
   type PdfLook,
 } from "../../../common/reportPdf";
+import { REPORT_STYLE } from "../../../common/reportStyle";
 
 import {
   DETAIL_FIRST_NUMBER,
   DETAIL_LABELS,
-  DETAIL_WEIGHTS,
   SUMMARY_WEIGHTS,
   formatAmount,
   formatCost,
@@ -32,10 +31,16 @@ import {
   type DetailedReport,
   type PrintReport,
   type SummaryReport,
-} from "./RptSupplierPurchasePrintReport";
+} from "./RptSupplierPurchaseRpt";
 
 const right = { halign: "right" as const };
 const bold = { fontStyle: "bold" as const };
+
+// the sides of a cell that is drawn with its own lines (the first row under a block heading, the column labels of a document): the top,
+// the right and the bottom - and the left on the first column. A cell takes its sides from stockDocumentTable() unless it names them.
+const sides = (firstColumn: boolean, lineWidth = STOCK_DOCUMENT_PDF.lineWidth) => ({
+  lineWidth: { top: lineWidth, right: lineWidth, bottom: lineWidth, left: firstColumn ? lineWidth : 0 },
+});
 
 // the table, the title on every page and "Page x of y"
 const draw = (
@@ -49,6 +54,8 @@ const draw = (
   columnWeights: number[],
   firstNumberColumn: number,
   look: PdfLook,
+  // the space left and right in the first column: the narrow Line column has less than a text column
+  firstColumnPadding: number,
   // blocks that must not be split over two pages (a block that does not fit in the rest of the page starts on the next
   // page); when given, they are drawn instead of `body`
   blocks?: CellDef[][][],
@@ -56,14 +63,14 @@ const draw = (
   pagePerBlock = false
 ) => {
   const usable = pageW - margin.left - margin.right;
-  const tableTop = pdfTableTop(margin);
+  const tableTop = stockReportTableTop(margin);
 
   const columnStyles: Record<number, { cellWidth: number; halign?: "right" }> = Object.fromEntries(
     columnWeights.map((w, i) => [i, { cellWidth: w * usable, ...(i >= firstNumberColumn ? right : {}) }])
   );
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, branch, look);
+  const drawTitle = () => drawStockReportTitle(doc, pageW, margin, report, branch, look);
 
   const options = {
     theme: "plain" as const,
@@ -72,8 +79,8 @@ const draw = (
     tableWidth: usable,
     rowPageBreak: "avoid" as const,
     showHead: head ? ("everyPage" as const) : ("never" as const),
-    styles: pdfTableStyles(look),
-    headStyles: pdfHeadStyles(look),
+    // the stock look (common/reportPdf.ts, STOCK_DOCUMENT_PDF): the cell space, the thin light lines drawn once
+    ...stockDocumentTable(look, STOCK_DOCUMENT_PDF.cellPaddingX, firstColumnPadding),
     columnStyles,
     ...(head ? { head } : {}),
   };
@@ -84,7 +91,14 @@ const draw = (
     autoTable(doc, { ...options, body, didDrawPage: drawTitle });
   }
 
-  addPageNumbers(doc, pageW, margin, look);
+  // "Page x of y" on a line of its own under the heading, and "Printed : ..." at the bottom right of every page
+  addStockDocumentPageNumbers(doc, look, {
+    right: pageW - margin.right,
+    pageRight: pageW - margin.right - STOCK_DOCUMENT_PDF.shiftLeft,
+    pageY: margin.top + 20 + REPORT_STYLE.pdf.titleGap,
+    bottomY: margin.bottom - 6,
+    footer: `Printed : ${report.txtReportInfo}`,
+  });
 };
 
 // a row of one text over the whole width, no lines
@@ -113,19 +127,22 @@ const buildSummary = async (report: SummaryReport): Promise<Blob> => {
     body.push(
       textRow(`Supplier : ${s.lkpSupplierID}   ${s.txtSupplierName}`, 4, {
         ...pdfGroupStyles(look),
+        fontSize: look.size.pdfBody, // the supplier line is 11 px too, as the rows and the totals
         minCellHeight: 9,
         valign: "bottom",
       })
     );
 
-    for (const l of s.lines) {
+    s.lines.forEach((l, index) => {
+      // the first line under the supplier has the line above it (the supplier row has no lines)
+      const top = (first: boolean) => (index === 0 ? sides(first) : {});
       body.push([
-        { content: l.txtDate },
-        { content: l.txtDocType },
-        { content: l.txtDocNo },
-        { content: formatAmount(l.txtAmount), styles: right },
+        { content: l.txtDate, styles: top(true) },
+        { content: l.txtDocType, styles: top(false) },
+        { content: l.txtDocNo, styles: top(false) },
+        { content: formatAmount(l.txtAmount), styles: { ...right, ...top(false) } },
       ]);
-    }
+    });
 
     body.push([
       { content: "Total :", colSpan: 3, styles: { ...bold, ...right } },
@@ -133,7 +150,7 @@ const buildSummary = async (report: SummaryReport): Promise<Blob> => {
     ]);
   }
 
-  draw(doc, 210, pdfMargin(20), report, report.txtBranch, head, body, SUMMARY_WEIGHTS, 3, look);
+  draw(doc, 210, pdfMargin(20), report, report.txtBranch, head, body, SUMMARY_WEIGHTS, 3, look, STOCK_DOCUMENT_PDF.cellPaddingX);
 
   return doc.output("blob");
 };
@@ -174,13 +191,17 @@ const buildDetailed = async (report: DetailedReport): Promise<Blob> => {
     body.push(
       DETAIL_LABELS.map((content, i) => ({
         content,
-        styles: { halign: i >= DETAIL_FIRST_NUMBER ? ("right" as const) : ("left" as const), fontSize: pdfLabelFontSize(look) },
+        styles: {
+          halign: i === 0 ? ("center" as const) : i >= DETAIL_FIRST_NUMBER ? ("right" as const) : ("left" as const),
+          fontSize: look.size.pdfBody, // the column labels are 11 px, the same as the rows
+          ...sides(i === 0),
+        },
       }))
     );
 
     for (const l of d.lines) {
       body.push([
-        { content: String(l.txtSlNo) },
+        { content: String(l.txtSlNo), styles: { halign: "center" as const } },
         { content: l.lkpItemID },
         { content: l.txtItemName },
         { content: l.txtUnit },
@@ -205,7 +226,15 @@ const buildDetailed = async (report: DetailedReport): Promise<Blob> => {
     body.push(textRow(`Note : ${d.txtNote}`, 8));
   }
 
-  draw(doc, 297, pdfMargin(12), report, "", undefined, [], DETAIL_WEIGHTS, DETAIL_FIRST_NUMBER, look, blocks, true);
+  // the column widths of the Stock Adjustment PDF (StockAdjustmentPdf.ts), in mm: Line 10, Item ID 38, Unit 16, Qty. 24,
+  // Unit Price 24, Unit Cost 28, Total Cost 34 - Item Name takes the rest; draw() wants them as weights of the usable width
+  const margin = pdfMargin(12);
+  const usable = 297 - margin.left - margin.right;
+  const fixed = [10, 38, 0, 16, 24, 24, 28, 34];
+  fixed[2] = usable - fixed.reduce((a, b) => a + b, 0);
+  const weights = fixed.map((w) => w / usable);
+
+  draw(doc, 297, margin, report, "", undefined, [], weights, DETAIL_FIRST_NUMBER, look, STOCK_DOCUMENT_PDF.lineCellPaddingX, blocks, true);
 
   return doc.output("blob");
 };

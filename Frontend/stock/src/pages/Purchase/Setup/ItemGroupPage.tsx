@@ -451,7 +451,7 @@ const ItemGroupPage: React.FC = () => {
             FORM
         ==================================================== */}
 
-          <div className="p-[12px] m-[12px]">
+          <div className="p-[12px] mb-3">
 
             {/* ITEM GROUP ID */}
 
@@ -460,7 +460,7 @@ const ItemGroupPage: React.FC = () => {
                 htmlFor="txtItemGroupID"
                 className="relative pr-3 text-right text-[14px] text-gray-600"
               >
-                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                <span className="absolute right-[15px] -top-2 h-[4px] w-[4px] text-red-500">*</span>
                 Item Group ID :
               </label>
 
@@ -490,7 +490,7 @@ const ItemGroupPage: React.FC = () => {
                 htmlFor="txtItemGroupName"
                 className="relative pr-3 text-right text-[14px] text-gray-600"
               >
-                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                <span className="absolute right-[15px] -top-2 h-[4px] w-[4px] text-red-500">*</span>
                 Item Group Name :
               </label>
 
@@ -516,7 +516,7 @@ const ItemGroupPage: React.FC = () => {
                 htmlFor="lkpFSN"
                 className="relative pr-3 text-right text-[14px] text-gray-600"
               >
-                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                <span className="absolute right-[15px] -top-2 h-[4px] w-[4px] text-red-500">*</span>
                 Stock / Non-stock :
               </label>
 
@@ -546,7 +546,7 @@ const ItemGroupPage: React.FC = () => {
                 htmlFor="lkpVATSlab"
                 className="relative pr-3 text-right text-[14px] text-gray-600"
               >
-                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                <span className="absolute right-[15px] -top-2 h-[4px] w-[4px] text-red-500">*</span>
                 VAT Slab :
               </label>
 
@@ -581,7 +581,7 @@ const ItemGroupPage: React.FC = () => {
                 htmlFor="txtVATPer"
                 className="relative pr-3 text-right text-[14px] text-gray-600"
               >
-                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                <span className="absolute right-[15px] -top-2 h-[4px] w-[4px] text-red-500">*</span>
                 VAT % :
               </label>
 

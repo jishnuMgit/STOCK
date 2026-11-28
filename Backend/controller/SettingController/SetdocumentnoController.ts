@@ -369,10 +369,8 @@ export const saveDocumentNo = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        wantedMode === "M"
-          ? "Document numbering modified successfully"
-          : "Document numbering saved successfully",
+      // always "saved successfully" (never "modified"), the same on every screen
+      message: "Set Document No. saved successfully",
       mode: wantedMode,
     });
   } catch (error: unknown) {

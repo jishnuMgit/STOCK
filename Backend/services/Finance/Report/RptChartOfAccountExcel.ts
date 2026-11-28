@@ -49,22 +49,22 @@ export const buildChartOfAccountWorkbook = async (
   // ---- company / heading / report info (rows 1-3) ----
   ws.mergeCells("A1:D1");
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = levelFont("company", false, "inter");
+  ws.getCell("A1").font = levelFont("company", false);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:D2");
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = levelFont("heading", false, "inter");
+  ws.getCell("A2").font = levelFont("heading", false);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   // the user and the time: bottom right of every printed page
-  setPrintedFooter(ws, report.reportInfo, "inter");
+  setPrintedFooter(ws, report.reportInfo);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Account ID", "Account Name", "C.C", "Level"];
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col === 4 ? "right" : "left" };
   });
@@ -87,7 +87,7 @@ export const buildChartOfAccountWorkbook = async (
   }
 
   // the whole sheet in the report font (a cell keeps its own size, bold and colour)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

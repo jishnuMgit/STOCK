@@ -9,7 +9,7 @@ import {
   buildHtml,
   printSupplierPurchaseReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptSupplierPurchase/RptSupplierPurchasePrintReport";
+} from "../../../../components/Purchase/Report/RptSupplierPurchase/RptSupplierPurchaseRpt";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";

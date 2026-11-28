@@ -8,7 +8,7 @@ import {
   buildHtml,
   printItemMovementReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptItemMovement/RptItemMovementPrintReport";
+} from "../../../../components/Purchase/Report/RptItemMovement/RptItemMovementRpt";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";

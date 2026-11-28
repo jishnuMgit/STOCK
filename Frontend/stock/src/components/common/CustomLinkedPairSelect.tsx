@@ -103,18 +103,23 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   const receipt = listLook === "receipt";
   const nameOptions = secondOptions ?? options;
   const menuWidth = firstWidth + gap + secondWidth;
+  // the Name box's list: its Name column is as wide as the box and the ID column hangs out to the right. When that is past the right
+  // edge of the window, the ID column is made narrower (px; 0 = the full firstWidth) - the divider stays at the end of the box
+  const [nameListIdWidth, setNameListIdWidth] = useState(0);
+  const idColumn = nameListIdWidth || firstWidth;
 
   // The blank middle grid column preserves the physical gap between the inputs.
   // fluid: the Name column is whatever the Name box is
   const normalColumns = fluid ? `${firstWidth}px ${gap}px minmax(0,1fr)` : `${firstWidth}px ${gap}px ${secondWidth}px`;
-  const reverseColumns = fluid ? `minmax(0,1fr) ${gap}px ${firstWidth}px` : `${secondWidth}px ${gap}px ${firstWidth}px`;
+  const reverseColumns = fluid ? `minmax(0,1fr) ${gap}px ${idColumn}px` : `${secondWidth}px ${gap}px ${idColumn}px`;
   // dividerAtBoxEnd: no separate gap column - the second column takes the gap, so its divider is on the edge of the box
   const normalColumnsAtEnd = fluid ? `${firstWidth}px minmax(0,1fr)` : `${firstWidth}px ${gap + secondWidth}px`;
-  const reverseColumnsAtEnd = fluid ? `minmax(0,1fr) ${gap + firstWidth}px` : `${secondWidth}px ${gap + firstWidth}px`;
+  const reverseColumnsAtEnd = fluid ? `minmax(0,1fr) ${gap + idColumn}px` : `${secondWidth}px ${gap + idColumn}px`;
 
   // fluid: the width of the whole row, measured when the ID box opens its list (that list covers both boxes)
   const rowRef = useRef<HTMLDivElement>(null);
   const [rowWidth, setRowWidth] = useState(0);
+  const secondRef = useRef<HTMLDivElement>(null);
 
   const selectedFirst =
     options.find((option) => option.value === firstValue) ?? null;
@@ -246,10 +251,14 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       ...(fluid
         ? reverse
           ? // the Name box's list: its own width, and the ID column hangs out to the right
-            { width: `calc(100% + ${firstWidth + gap}px)`, minWidth: `calc(100% + ${firstWidth + gap}px)`, maxWidth: "none" }
+            { width: `calc(100% + ${idColumn + gap}px)`, minWidth: `calc(100% + ${idColumn + gap}px)`, maxWidth: "none" }
           : // the ID box's list: both boxes
             { width: `${rowWidth || menuWidth}px`, minWidth: `${rowWidth || menuWidth}px`, maxWidth: "none" }
-        : { width: `${menuWidth}px`, minWidth: `${menuWidth}px`, maxWidth: `${menuWidth}px` }),
+        : (() => {
+            // the Name box's list is as wide as its box plus the ID column (narrower when the window has no room)
+            const w = reverse ? secondWidth + gap + idColumn : menuWidth;
+            return { width: `${w}px`, minWidth: `${w}px`, maxWidth: `${w}px` };
+          })()),
       marginTop: "2px",
       border: receipt ? "1px solid #aaaaaa" : "none",
       borderRadius: receipt ? 0 : "3px",
@@ -261,6 +270,8 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
     menuPortal: (base) => ({
       ...base,
       zIndex: menuZIndex,
+      // an absolute list in the portal is placed from the box's left in the window, not in the page: add the page's horizontal scroll
+      ...(menuPortalTarget && typeof window !== "undefined" ? { marginLeft: window.scrollX } : {}),
     }),
     menuList: (base) => ({
       ...base,
@@ -335,18 +346,18 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           }}
           onMenuClose={onMenuClose}
           noOptionsMessage={noOptionsMessage}
-          menuPlacement="auto"
-          // opens upward unless the whole list fits below (react-select otherwise shrinks it into the space left below)
+          menuPlacement="bottom" // always opens downward
           minMenuHeight={listHeight}
           menuShouldScrollIntoView={false}
           menuPortalTarget={menuPortalTarget}
-          menuPosition={menuPortalTarget ? "fixed" : undefined}
+          menuPosition={undefined} // "absolute" in the portal: stays below the box (a "fixed" menu is flipped upward when the window has no room below)
           classNamePrefix="linked-pair"
         />
       </div>
 
       {/* Second input: Name. Its menu shows Name first, then ID. */}
       <div
+        ref={secondRef}
         className={`relative ${fluid ? "min-w-0 flex-1" : "shrink-0"}`}
         style={fluid ? undefined : { width: secondWidth }}
       >
@@ -365,15 +376,21 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           filterOption={matchesEitherColumn}
           isClearable={false}
           onKeyDown={onKeyDown}
-          onMenuOpen={onMenuOpen}
+          onMenuOpen={() => {
+            const box = secondRef.current?.getBoundingClientRect();
+            if (box) {
+              const room = Math.floor(window.innerWidth - 12 - box.left - box.width - gap); // what is left for the ID column
+              setNameListIdWidth(room < firstWidth ? Math.max(60, room) : 0);
+            }
+            onMenuOpen?.();
+          }}
           onMenuClose={onMenuClose}
           noOptionsMessage={noOptionsMessage}
-          menuPlacement="auto"
-          // opens upward unless the whole list fits below (react-select otherwise shrinks it into the space left below)
+          menuPlacement="bottom" // always opens downward
           minMenuHeight={listHeight}
           menuShouldScrollIntoView={false}
           menuPortalTarget={menuPortalTarget}
-          menuPosition={menuPortalTarget ? "fixed" : undefined}
+          menuPosition={undefined} // "absolute" in the portal: stays below the box (a "fixed" menu is flipped upward when the window has no room below)
           classNamePrefix="linked-pair"
         />
       </div>

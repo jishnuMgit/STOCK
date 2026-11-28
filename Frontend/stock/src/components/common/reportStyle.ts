@@ -150,9 +150,31 @@ type PrintCssOptions = {
   groupSelector: string;
   // the report info ("<user>  dd/mm/yyyy hh:mm"): printed as  "Printed : ..."  at the bottom right of every page
   reportInfo?: string;
+  // the stock look for a report (see STOCK_REPORT_CSS): the same design as the stock documents. The HTML then has a row
+  // <td class="pagerow"> under the heading and no report info beside the branch.
+  stockLook?: boolean;
   // anything this report needs on top
   extra?: string;
 };
+
+// THE STOCK LOOK FOR A REPORT - the same design as a stock document (STOCK_DOCUMENT_CSS): ask for it with
+// reportPrintCss({ stockLook: true, ... }). The text under the heading (td.sub, and the lines of a document header tr.info) is 11 px,
+// the column headings are 11 px, the table lines are a whole 1 px in a light colour, a cell has 4 px at the sides, and "Page x of y"
+// has a line of its own (td.pagerow) under the heading. "Page x of y" is 11 px and "Printed : ..." 9 px.
+export const STOCK_REPORT_CSS = `.sub { font-size: 11px; height: 25px; } /* the height is the space between the Branch line and the table */
+  td.sub, td.pagerow, tr.info td { padding: 0; }
+  tr.info td { font-size: 11px; }
+  td.entry b { font-size: 16px; } /* the Entry No. itself */
+  .pagerow { height: 20px; border: 0; } /* the line of its own for "Page x of y", between the heading and the Branch line */
+  th { font-size: 11px; padding: 0 4px; } /* the column headings are 11 px, the same as the rows */
+  td { padding: 0 4px; }
+  td.u { white-space: nowrap; padding: 0 4px; } /* a unit is never split over two lines */
+  td.c { text-align: center; padding: 0 2px; white-space: nowrap; } /* the line numbers: in the middle of a narrow column */
+  th.c { text-align: center; padding: 0 4px; }
+  th, tr.labels th { border-color: #e2e8f2; } /* the table lines: lighter than the common #c7d1e4, a whole 1 px */
+  td { border-color: #e2e8f2; }
+  tr.tot td, tr.first td { border-top: 1px solid #e2e8f2; }
+  tr.info td, tr.foot td, tr.gap td, ${'${groupSelectorPlaceholder}'} { border: 0; }`;
 
 // The CSS of a printed report: the page, the font, the title rows (company / heading / branch + info), the
 // table, its lines and its Total rows. The report's own HTML uses these classes:
@@ -162,7 +184,7 @@ type PrintCssOptions = {
 //   tbody.keep                   a block that must not be split over two pages: it starts on the next page when it does
 //                                not fit in what is left of this one (a block taller than a page still splits)
 //   tbody.newpage                a block that always starts on a new page (add it to every block but the first)
-export const reportPrintCss = ({ look = "classic", orientation, marginLeft, groupSelector, reportInfo, extra = "" }: PrintCssOptions) => {
+export const reportPrintCss = ({ look = "classic", orientation, marginLeft, groupSelector, reportInfo, stockLook = false, extra = "" }: PrintCssOptions) => {
   const { lineColor, html } = REPORT_STYLE;
   const { css, size } = reportLook(look);
   const { family: font, importCss } = css;
@@ -171,8 +193,8 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   @page {
     size: A4 ${orientation};
     margin: 12.7mm 10mm 12.7mm ${marginLeft};
-    @top-right { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
-    ${reportInfo ? `@bottom-right { content: "Printed : ${cssStr(reportInfo)}"; font: ${size.small}pt ${font}; }` : ""}
+    @top-right { content: "Page " counter(page) " of " counter(pages); font: ${stockLook ? "11px" : `${size.small}pt`} ${font}; }
+    ${reportInfo ? `@bottom-right { content: "Printed : ${cssStr(reportInfo)}"; font: ${stockLook ? STOCK_DOCUMENT_FOOTER_SIZE : `${size.small}pt`} ${font}; }` : ""}
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: ${size.body}pt ${font}; color: #000;
@@ -196,6 +218,7 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   tr.tot td, tr.first td { border-top: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; }
   tbody.newpage { break-before: page; page-break-before: always; } /* a block that starts on a new page (not the first one) */
   tbody.keep { break-inside: avoid; page-break-inside: avoid; } /* a block (<tbody class="keep">) is never split over two pages */
+  ${stockLook ? STOCK_REPORT_CSS.replace("${groupSelectorPlaceholder}", groupSelector) : ""}
   ${extra}`;
 };
 

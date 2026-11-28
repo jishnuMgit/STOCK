@@ -22,7 +22,7 @@ import {
   buildHtml,
   printIncomeSumReport,
   type PrintReport,
-} from "../../../../components/Finance/Report/RptIncomeSum/RptIncomeSumPrintReport";
+} from "../../../../components/Finance/Report/RptIncomeSum/RptIncomeSumRpt";
 import { buildIncomeSumPdf } from "../../../../components/Finance/Report/RptIncomeSum/RptIncomeSumPdf";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";

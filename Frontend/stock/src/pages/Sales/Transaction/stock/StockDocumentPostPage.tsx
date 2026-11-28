@@ -326,7 +326,7 @@ const StockDocumentPostPage: React.FC = () => {
 
   return (
     <div
-      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+      className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3"
       onKeyDown={enterAsTab}
     >
       {messageDialog}
@@ -334,7 +334,7 @@ const StockDocumentPostPage: React.FC = () => {
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <Header Name="Stock Document Post" />
 
-          <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
+          <section className="flex flex-col gap-3 px-3 pb-3 pt-3">
             <StockDocumentPostHeader
               branchOptions={branchOptions}
               lkpBranch={lkpBranch}

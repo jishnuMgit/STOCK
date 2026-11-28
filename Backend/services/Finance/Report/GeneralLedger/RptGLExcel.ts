@@ -44,20 +44,20 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells(`A1:${LAST_COL}1`);
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = levelFont("company", false, "inter");
+  ws.getCell("A1").font = levelFont("company", false);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A2:${LAST_COL}2`);
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = levelFont("heading", false, "inter");
+  ws.getCell("A2").font = levelFont("heading", false);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A3:${LAST_COL}3`);
   ws.getCell("A3").value = report.branch;
-  ws.getCell("A3").font = levelFont("group", false, "inter");
+  ws.getCell("A3").font = levelFont("group", false);
 
   // the user and the time: bottom right of every printed page
-  setPrintedFooter(ws, report.reportInfo, "inter");
+  setPrintedFooter(ws, report.reportInfo);
 
   const labels = [
     "Date", "Br. ID", "Type", "Doc. No.", "Description",
@@ -76,12 +76,12 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
     // ---- account (VB group header) ----
     const accRow = ws.addRow([`Account :  ${acc.accountId}   ${acc.accountName}`]);
     ws.mergeCells(`A${accRow.number}:${LAST_COL}${accRow.number}`);
-    accRow.getCell(1).font = levelFont("group", true, "inter");
+    accRow.getCell(1).font = levelFont("group", true);
 
     // ---- column labels ----
     const head = ws.addRow(labels);
     head.eachCell((c, col) => {
-      c.font = levelFont("columnHead", true, "inter");
+      c.font = levelFont("columnHead", true);
       c.border = thin;
       c.alignment = { horizontal: col >= 7 ? "right" : "left" };
     });
@@ -119,7 +119,7 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
   });
 
   // the whole sheet in the report font (a cell keeps its own size and bold)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

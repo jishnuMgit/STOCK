@@ -393,6 +393,7 @@ export const PairFilter: React.FC<{
             firstWidth={firstWidth}
             secondWidth={secondWidth}
             gap={FILTER_GAP}
+            nameDividerAtBoxEnd // the Name list's ID column starts exactly where the Name box ends (no gap)
             menuZIndex={999999}
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             headerFontSize="12px"
@@ -700,9 +701,9 @@ export const ReportPrintRow: React.FC<{
   // extra classes of the row, e.g. "w-full" so that a child with "ml-auto" goes to the right end of the row
   className?: string;
 }> = ({ onPrint, disabled = false, children, className = "" }) => (
-  <div className={`grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] gap-x-4 ${className}`}>
+  <div className={`w-full gap-x-4 ${className}`}>
     <div />
-    <div className="flex items-center gap-1">
+    <div className="flex w-full justify-center  items-center gap-1">
       <button
         id="btnPrint"
         type="button"

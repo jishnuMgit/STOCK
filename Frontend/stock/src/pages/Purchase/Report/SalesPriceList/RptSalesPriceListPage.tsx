@@ -1,20 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { buildSalesPriceListPdf } from "./downloadSalesPriceListPdf";
-import { saveFile } from "./saveFile";
+import React, { useEffect, useMemo, useState } from "react";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildSalesPriceListPdf } from "../../../../components/Purchase/Report/RptSalesPriceList/RptSalesPriceListPdf";
 import {
   buildHtml,
   printSalesPriceListReport,
   type PriceListReport,
-} from "./PrintSalesPriceListReport";
+} from "../../../../components/Purchase/Report/RptSalesPriceList/RptSalesPriceListRpt";
 import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
-import { CustomRadio } from "../../../../components/common/ReportFormParts";
 import {
   BranchOnlyFilter,
   PairFilter,
   ReportForm,
   ReportPrintRow,
 } from "../../../../components/common/ReportFilters";
-import Header from "../../../../components/common/Header";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 type Option = { value: string; label: string };
@@ -64,7 +62,6 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
   const { notify, dialog: messageDialog } = useMessageModal();
   const [branchOptions, setBranchOptions] = useState<BranchOption[]>([]);
   const [branch, setBranch] = useState<BranchOption | null>(null); // lkpBranch
-  const [reportFile, setReportFile] = useState("Excel"); // rdgReportFile
   const [busy, setBusy] = useState(false);
 
   // Item Group / Item filters
@@ -268,65 +265,8 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     }
   };
 
-  // Print in the preview: the browser print dialog (printer)
-  const handlePreviewPrint = () => {
-    if (!preview || busy) return;
-    try {
-      printSalesPriceListReport(preview.report);
-    } catch {
-      notify.error("Could not open the print view");
-    }
-  };
-
-  // Download in the preview: saves the chosen file ("Save as" window, so the
-  // browser does not open it afterwards)
-  // a double click must not start two saves (state is not updated yet on the
-  // second click, so a ref is used)
-  const downloading = useRef(false);
-
-  const handlePreviewOk = async () => {
-    if (!preview || busy || downloading.current) return;
-    downloading.current = true;
-    const { report, fileBase, request } = preview;
-    const asPdf = reportFile === "PDF";
-
-    setBusy(true);
-    try {
-      const blob = asPdf ? await buildSalesPriceListPdf(report) : await fetchExcel(request);
-      if (!blob) return; // the error is already shown
-
-      const kind = asPdf ? "pdf" : "xlsx";
-      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
-      if (saved) {
-
-        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
-        setPreview(null); // cancelled "Save as": the preview stays
-      }
-    } catch {
-      notify.error(
-        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
-      );
-    } finally {
-      downloading.current = false;
-      setBusy(false);
-    }
-  };
-
-  const previewHtml = useMemo(
-    () =>
-      preview
-        ? // 40px left / 20px right margin for the preview only
-        buildHtml(preview.report).replace(
-          "</head>",
-          "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-        )
-        : "",
-    [preview],
-  );
-
   const handleClose = () => {
     setBranch(branchOptions[0] ?? null);
-    setReportFile("Excel");
     setGroupMode("All");
     setGroupId(null);
     setItemMode("All");
@@ -365,68 +305,17 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     <ReportForm
       title="Sales Price List"
       overlay={
-        // Print preview
+        // the Print Preview (after Print)
         preview && (
-
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
-            <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
-              <Header Name="Print Preview" />
-
-              <iframe
-                title="Print Preview"
-                srcDoc={previewHtml}
-                className="min-h-0 flex-1 border-0 bg-white"
-              />
-
-              <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
-                <div className="flex gap-3">
-                  <button
-                    id="btnPreviewPrint"
-                    type="button"
-                    onClick={handlePreviewPrint}
-                    disabled={busy}
-                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <u>P</u>rint
-                  </button>
-                  <button
-                    id="btnPreviewOk"
-                    type="button"
-                    autoFocus
-                    onClick={handlePreviewOk}
-                    disabled={busy}
-                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <u>D</u>ownload
-                  </button>
-                </div>
-
-                {/* Report File: what Download saves */}
-                <div
-                  id="rdgReportFile"
-                  className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
-                >
-                  <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                    File Format
-                  </span>
-                  <CustomRadio
-                    name="rdgReportFile"
-                    value="Excel"
-                    label="Excel"
-                    checked={reportFile === "Excel"}
-                    onChange={() => setReportFile("Excel")}
-                  />
-                  <CustomRadio
-                    name="rdgReportFile"
-                    value="PDF"
-                    label="PDF"
-                    checked={reportFile === "PDF"}
-                    onChange={() => setReportFile("PDF")}
-                  />
-                </div>
-              </footer>
-            </div>
-          </div>
+          <ReportPreview
+            showClose={false}
+            html={buildHtml(preview.report)}
+            fileBase={preview.fileBase}
+            onPrint={() => printSalesPriceListReport(preview.report)}
+            buildPdf={() => buildSalesPriceListPdf(preview.report)}
+            fetchExcel={() => fetchExcel(preview.request)}
+            onClose={() => setPreview(null)}
+          />
         )
       }
     >

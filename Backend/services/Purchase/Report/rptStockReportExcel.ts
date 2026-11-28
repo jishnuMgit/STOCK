@@ -84,7 +84,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
       ];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, columns, undefined, "inter");
+  addReportTitle(ws, report, report.txtBranch, columns, undefined);
 
   // ---- column labels (row 4) ----
   const labels = detailed
@@ -96,7 +96,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
   const head = ws.getRow(4);
   head.values = labels;
   head.eachCell((cell, col) => {
-    cell.font = levelFont("columnHead", true, "inter");
+    cell.font = levelFont("columnHead", true);
     cell.border = thin;
     cell.alignment = { horizontal: col >= rightFrom ? "right" : "left" };
   });
@@ -108,7 +108,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
   const addBranchRow = (name: string) => {
     const row = ws.addRow([`Branch : ${name}`]);
     ws.mergeCells(row.number, 1, row.number, columns);
-    row.getCell(1).font = levelFont("group", true, "inter");
+    row.getCell(1).font = levelFont("group", true);
     row.getCell(1).alignment = { horizontal: "left" };
   };
 
@@ -123,7 +123,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
       for (const item of branch.items) {
         const itemRow = ws.addRow([`Item : ${item.lkpItemID}   ${item.txtItemName}`]);
         ws.mergeCells(itemRow.number, 1, itemRow.number, columns);
-        itemRow.getCell(1).font = levelFont("group", true, "inter");
+        itemRow.getCell(1).font = levelFont("group", true);
         itemRow.getCell(1).alignment = { horizontal: "left" };
 
         for (const line of item.lines) {
@@ -215,7 +215,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
   }
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws, "inter");
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

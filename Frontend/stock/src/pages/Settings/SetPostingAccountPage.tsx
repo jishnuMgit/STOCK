@@ -42,6 +42,12 @@ const SmallClearIndicator = (props: ClearIndicatorProps<any, false>) => (
   </selectParts.ClearIndicator>
 );
 
+// the Branch box has the same little x as the account boxes (it had the big default one)
+const branchSelectComponents = {
+  ...branchComponents,
+  ClearIndicator: SmallClearIndicator,
+};
+
 const accountIdComponents = {
   ...makePairComponents("Account ID", "Account Name", false, true),
   ClearIndicator: SmallClearIndicator,
@@ -756,7 +762,7 @@ const SetPostingAccountPage: React.FC = () => {
                     handleChange("lkpBranch", selected?.value ?? "")
                   }
                   styles={{ ...selectStyles, ...branchMenuStyles }}
-                  components={branchComponents}
+                  components={branchSelectComponents}
                   filterOption={filterLabelOrValue}
                   noOptionsMessage={() => "No Branch Found"}
                   placeholder=""

@@ -20,7 +20,7 @@ import {
   buildHtml,
   printStockValuationReport,
   type PrintReport,
-} from "../../../../components/Purchase/Report/RptStockValuation/RptStockValuationPrintReport";
+} from "../../../../components/Purchase/Report/RptStockValuation/RptStockValuationRpt";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
 dayjs.extend(customParseFormat);
 

@@ -11,7 +11,7 @@ import {
   buildHtml,
   printBeginningBalanceReport,
   type PrintReport,
-} from "../../../../components/Transaction/BeginningBalance/RptBeginningBalancePrint";
+} from "../../../../components/Transaction/BeginningBalance/RptBeginningBalance";
 import {
   MENU_ID,
   api,
