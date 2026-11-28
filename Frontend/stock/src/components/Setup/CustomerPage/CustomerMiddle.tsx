@@ -857,184 +857,144 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       ===================================================== */}
 
       <div className="p-3">
-        <div className="grid grid-cols-1 gap-x-2 gap-y-1.5 md:grid-cols-2 lg:grid-cols-4 mr-[6.2rem]">
-          {/* =================================================
-           CREDIT LIMIT
-          ================================================= */}
+        <div
+          className="mr-[6.2rem] grid grid-cols-[92px_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5
+          lg:grid-cols-[92px_96px_100px_56px_84px_minmax(0,1fr)_50px_240px]"
+        >
+          {/* ---------- ROW 1 ---------- */}
 
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-            <label
-              htmlFor="txtCreditLimit"
-              className="text-[11px] text-slate-600"
-            >
-              Credit Limit
-            </label>
+          <label htmlFor="txtCreditLimit" className="text-[11px] text-slate-600">
+            Credit Limit
+          </label>
+          <input
+            id="txtCreditLimit"
+            name="txtCreditLimit"
+            type="text"
+            value={txtCreditLimit}
+            onChange={(e) => setTxtCreditLimit(e.target.value)}
+            className={inputClass}
+            style={{ width: "100%" }}
+          />
 
-            <input
-              id="txtCreditLimit"
-              name="txtCreditLimit"
-              type="text"
-              value={txtCreditLimit}
-              onChange={(e) => setTxtCreditLimit(e.target.value)}
-              className={inputClass}
-              style={{ width: "70%" }}
+          <label
+            htmlFor="txtCreditDays"
+            className="whitespace-nowrap text-[11px] text-slate-600 lg:pl-6"
+          >
+            Credit Days
+          </label>
+          <input
+            id="txtCreditDays"
+            name="txtCreditDays"
+            maxLength={3}
+            type="text"
+            value={txtCreditDays}
+            onChange={(e) => setTxtCreditDays(e.target.value)}
+            className={inputClass}
+            style={{ width: "100%" }}
+          />
+
+          <label
+            htmlFor="txtShortName"
+            className="whitespace-nowrap text-[11px] text-slate-600 lg:pl-2"
+          >
+            Short Name
+          </label>
+          <input
+            id="txtShortName"
+            name="txtShortName"
+            type="text"
+            value={txtShortName}
+            onChange={(e) => setTxtShortName(e.target.value)}
+            maxLength={20}
+            className={inputClass}
+            style={{ width: "100%" }}
+          />
+
+          <label htmlFor="lkpStaff" className="text-[11px] text-slate-600">
+            Staff
+          </label>
+          <div className="w-full min-w-0">
+            <CommonTableSelect
+              {...commonProps}
+              inputId="lkpStaff"
+              options={staffOptions}
+              value={staffOptions.find((o) => o.value === lkpStaff) || null}
+              columns={[
+                { key: "label", label: "Staff Name" },
+                { key: "value", label: "ID", width: "50px" },
+              ]}
+              onChange={(selected) => setLkpStaff(selected?.value || "")}
+              width="100%"
+              menuWidth="calc(100% + 50px)"
             />
           </div>
 
-          {/* =================================================
-             CREDIT DAYS
-          ================================================= */}
+          {/* ---------- ROW 2 ---------- */}
 
-          <div className="grid grid-cols-[55px_minmax(0,1fr)] items-center gap-2">
-            <label
-              htmlFor="txtCreditDays"
-              className="text-[11px] text-slate-600 whitespace-nowrap -ml-1.5"
-            >
-              Credit Days
-            </label>
+          <label htmlFor="txtContact" className="text-[11px] text-slate-600">
+            Contact
+          </label>
+          <input
+            maxLength={80}
+            id="txtContact"
+            name="txtContact"
+            type="text"
+            value={txtContact}
+            onChange={(e) => setTxtContact(e.target.value)}
+            className={`${inputClass} lg:col-span-5`}
+            style={{ width: "100%" }}
+          />
 
-            <input
-              id="txtCreditDays"
-              name="txtCreditDays"
-              maxLength={3}
-              type="text"
-              value={txtCreditDays}
-              onChange={(e) => setTxtCreditDays(e.target.value)}
-              className={inputClass}
-              style={{ width: "30%" }}
+          <label htmlFor="lkpBranch" className="text-[11px] text-slate-600">
+            Branch
+          </label>
+          <div className="w-full min-w-0">
+            <CommonTableSelect
+              {...commonProps}
+              inputId="lkpBranch"
+              options={branchOptions}
+              value={branchOptions.find((o) => o.value === lkpBranch) || null}
+              columns={[
+                { key: "label", label: "Branch" },
+                { key: "value", label: "ID", width: "50px" },
+              ]}
+              onChange={(selected) => setLkpBranch(selected?.value || "")}
+              width="100%"
+              menuWidth="calc(100% + 50px)"
             />
           </div>
 
-          {/* =================================================
-            SHORT NAME
-          ================================================= */}
+          {/* ---------- E-MAIL ---------- */}
 
-          <div className="relative -left-23.75 grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
-            <label
-              htmlFor="txtShortName"
-              className="text-[11px] text-slate-600 whitespace-nowrap"
-            >
-              Short Name
-            </label>
+          <label htmlFor="txtEMail" className="text-[11px] text-slate-600">
+            E-Mail
+          </label>
+          <input
+            maxLength={120}
+            id="txtEMail"
+            name="txtEMail"
+            type="text"
+            value={txtEMail}
+            onChange={(e) => setTxtEMail(e.target.value)}
+            className={`${inputClass} lg:col-span-7`}
+            style={{ width: "100%" }}
+          />
 
-            <input
-              id="txtShortName"
-              name="txtShortName"
-              type="text"
-              value={txtShortName}
-              onChange={(e) => setTxtShortName(e.target.value)}
-              maxLength={20}
-              className={inputClass}
-              style={{ width: "135%" }}
-            />
-          </div>
+          {/* ---------- PHONE ---------- */}
 
-          {/* =================================================
-            STAFF
-          ================================================= */}
-
-          <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2">
-            <label htmlFor="lkpStaff" className="text-[11px] text-slate-600">
-              Staff
-            </label>
-
-            <div className="w-full min-w-0">
-              <CommonTableSelect
-                {...commonProps}
-                inputId="lkpStaff"
-                options={staffOptions}
-                value={staffOptions.find((o) => o.value === lkpStaff) || null}
-                columns={[
-                  { key: "label", label: "Staff Name" },
-                  { key: "value", label: "ID", width: "50px" },
-                ]}
-                onChange={(selected) => setLkpStaff(selected?.value || "")}
-                width="100%"
-                menuWidth="calc(100% + 50px)"
-              />
-            </div>
-          </div>
-
-          {/* CONTACT */}
-          <div className="lg:col-span-3 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-            <label htmlFor="txtContact" className="text-[11px] text-slate-600">
-              Contact
-            </label>
-            <input
-              maxLength={80}
-              id="txtContact"
-              name="txtContact"
-              type="text"
-              value={txtContact}
-              onChange={(e) => setTxtContact(e.target.value)}
-              className={inputClass}
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {/* BRANCH */}
-          <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2">
-            <label htmlFor="lkpBranch" className="text-[11px] text-slate-600">
-              Branch
-            </label>
-            <div className="w-full min-w-0">
-              <CommonTableSelect
-                {...commonProps}
-                inputId="lkpBranch"
-                options={branchOptions}
-                value={branchOptions.find((o) => o.value === lkpBranch) || null}
-                columns={[
-                  { key: "label", label: "Branch" },
-                  { key: "value", label: "ID", width: "50px" },
-                ]}
-                onChange={(selected) => setLkpBranch(selected?.value || "")}
-                width="100%"
-                menuWidth="calc(100% + 50px)"
-              />
-            </div>
-          </div>
-
-          {/* =================================================
-            E-MAIL - FULL WIDTH
-          ================================================= */}
-
-          <div className="lg:col-span-4 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-            <label htmlFor="txtEMail" className="text-[11px] text-slate-600">
-              E-Mail
-            </label>
-
-            <input
-              maxLength={120}
-              id="txtEMail"
-              name="txtEMail"
-              type="text"
-              value={txtEMail}
-              onChange={(e) => setTxtEMail(e.target.value)}
-              className={inputClass}
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {/* =================================================
-             PHONE - FULL WIDTH
-          ================================================= */}
-
-          <div className="lg:col-span-4 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-            <label htmlFor="txtPhone" className="text-[11px] text-slate-600">
-              Phone
-            </label>
-
-            <input
-              maxLength={60}
-              id="txtPhone"
-              name="txtPhone"
-              type="text"
-              value={txtPhone}
-              onChange={(e) => setTxtPhone(e.target.value)}
-              className={inputClass}
-              style={{ width: "100%" }}
-            />
-          </div>
+          <label htmlFor="txtPhone" className="text-[11px] text-slate-600">
+            Phone
+          </label>
+          <input
+            maxLength={60}
+            id="txtPhone"
+            name="txtPhone"
+            type="text"
+            value={txtPhone}
+            onChange={(e) => setTxtPhone(e.target.value)}
+            className={`${inputClass} lg:col-span-7`}
+            style={{ width: "100%" }}
+          />
         </div>
       </div>
     </div>

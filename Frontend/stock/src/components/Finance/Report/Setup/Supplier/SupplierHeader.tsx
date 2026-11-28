@@ -154,7 +154,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
 
             <div className=" border-b border-slate-200 px-3 py-3 sm:px-5 lg:px-6">
                 <div
-                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_minmax(0,1fr)_80px_150px]
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_80px_150px_minmax(0,1fr)]
       lg:items-end lg:gap-4"
                 >
                     {/* NEW SUPPLIER ID */}
@@ -229,9 +229,63 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
                             onChange={(e) => setTxtSupplierID(e.target.value)}
                             readOnly={idLocked || optNewSupplierID === "Auto"}
                             className={`${inputClass} ${idLocked || optNewSupplierID === "Auto"
-                                    ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                                    : "bg-white text-slate-700"
+                                ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                                : "bg-white text-slate-700"
                                 }`}
+                        />
+                    </div>
+
+                    {/* HAVE DIVISION */}
+
+                    <div className="relative -left-1.25 w-full">
+                        <label
+                            htmlFor="lkpHaveDivision"
+                            className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
+                        >
+                            Division
+                        </label>
+
+                        <CommonTableSelect
+                            {...commonProps}
+                            inputId="lkpHaveDivision"
+                            value={
+                                getOption(
+                                    haveDivisionOptions,
+                                    lkpHaveDivision,
+                                ) as TableSelectOption | null
+                            }
+                            options={haveDivisionOptions as TableSelectOption[]}
+                            columns={[{ key: "label", label: "Division" }]}
+                            width="100%"
+                            menuWidth="100%"
+                            onChange={(option) => setLkpHaveDivision(option?.value ?? "")}
+                        />
+                    </div>
+
+                    {/* BUSINESS TYPE */}
+
+                    <div className="relative -left-3.25 w-[50%]">
+                        <label
+                            htmlFor="lkpBusinessType"
+                            className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
+                        >
+                            Business Type
+                        </label>
+
+                        <CommonTableSelect
+                            {...commonProps}
+                            inputId="lkpBusinessType"
+                            value={
+                                getOption(
+                                    businessTypeOptions,
+                                    lkpBusinessType,
+                                ) as TableSelectOption | null
+                            }
+                            options={businessTypeOptions as TableSelectOption[]}
+                            columns={[{ key: "label", label: "Business Type" }]}
+                            width="100%"
+                            menuWidth="100%"
+                            onChange={(option) => setLkpBusinessType(option?.value ?? "")}
                         />
                     </div>
 
@@ -321,60 +375,6 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
                                 onChange={handleAccountChange}
                             />
                         </div>
-                    </div>
-
-                    {/* HAVE DIVISION */}
-
-                    <div className="relative -left-1.25 w-full">
-                        <label
-                            htmlFor="lkpHaveDivision"
-                            className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
-                        >
-                            Division
-                        </label>
-
-                        <CommonTableSelect
-                            {...commonProps}
-                            inputId="lkpHaveDivision"
-                            value={
-                                getOption(
-                                    haveDivisionOptions,
-                                    lkpHaveDivision,
-                                ) as TableSelectOption | null
-                            }
-                            options={haveDivisionOptions as TableSelectOption[]}
-                            columns={[{ key: "label", label: "Division" }]}
-                            width="100%"
-                            menuWidth="100%"
-                            onChange={(option) => setLkpHaveDivision(option?.value ?? "")}
-                        />
-                    </div>
-
-                    {/* BUSINESS TYPE */}
-
-                    <div className="relative -left-3.25 w-[50%]">
-                        <label
-                            htmlFor="lkpBusinessType"
-                            className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
-                        >
-                            Business Type
-                        </label>
-
-                        <CommonTableSelect
-                            {...commonProps}
-                            inputId="lkpBusinessType"
-                            value={
-                                getOption(
-                                    businessTypeOptions,
-                                    lkpBusinessType,
-                                ) as TableSelectOption | null
-                            }
-                            options={businessTypeOptions as TableSelectOption[]}
-                            columns={[{ key: "label", label: "Business Type" }]}
-                            width="100%"
-                            menuWidth="100%"
-                            onChange={(option) => setLkpBusinessType(option?.value ?? "")}
-                        />
                     </div>
                 </div>
             </div>
