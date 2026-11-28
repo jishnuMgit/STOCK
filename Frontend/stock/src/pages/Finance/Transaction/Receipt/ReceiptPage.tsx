@@ -33,6 +33,11 @@ import {
 import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
 import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save/ReceiptPdf";
 
+import AttachPopup, {
+  type AttachmentRecord,
+  type AttachmentSaveRow,
+} from "../../../../components/common/AttachPopup";
+
 import { apiFetch, getSession } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
@@ -191,6 +196,9 @@ const ReceiptPage: React.FC = () => {
   const [cbCcId, setCbCcId] = useState("");
 
   const [txtDocNo, setTxtDocNo] = useState("");
+
+  const [showAttach, setShowAttach] = useState(false);
+  const [attachments, setAttachments] = useState<AttachmentRecord[]>([]);
 
   const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
   const [dtpDate, setDtpDate] = useState(getTodayDate);
@@ -1903,6 +1911,79 @@ const ReceiptPage: React.FC = () => {
     };
   }, []);
 
+  const attachParams = () =>
+    new URLSearchParams({
+      lkpBranch,
+      lkpType: GetStrDocType(lkpType),
+      txtDocNo: txtDocNo.trim(),
+    });
+
+  const handleAttach = useCallback(async () => {
+    if (!isModifyMode) {
+      notify.warning("Load a saved receipt before attaching documents.");
+      return;
+    }
+
+    try {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/attachments?${attachParams()}`,
+      );
+      const result = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        data?: AttachmentRecord[];
+      };
+
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || "Unable to load attachments.");
+      }
+
+      setAttachments(result.data ?? []);
+      setShowAttach(true);
+    } catch (error) {
+      notify.error(
+        error instanceof Error ? error.message : "Cannot connect to the Receipt API.",
+      );
+    }
+  }, [isModifyMode, lkpBranch, lkpType, txtDocNo]);
+
+  const loadAttachmentFile = useCallback(
+    async (slNo: number): Promise<Blob> => {
+      const params = attachParams();
+      params.set("slNo", String(slNo));
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/attachments/file?${params}`,
+      );
+      if (!response.ok) throw new Error("Unable to load the attachment.");
+      return response.blob();
+    },
+    [lkpBranch, lkpType, txtDocNo],
+  );
+
+  const handleAttachSave = useCallback(
+    async (attachRows: AttachmentSaveRow[]) => {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/attachments/save`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lkpBranch,
+            lkpType: GetStrDocType(lkpType),
+            txtDocNo: txtDocNo.trim(),
+            rows: attachRows,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Save failed (error ${response.status}).`);
+      }
+    },
+    [lkpBranch, lkpType, txtDocNo],
+  );
+
   /* =======================================================
      RETURN
   ======================================================= */
@@ -2038,6 +2119,7 @@ const ReceiptPage: React.FC = () => {
             onDelete={handledelete}
             saveLabel={isModifyMode ? "Modify" : "Save"}
             isPosted={isPosted}
+            onAttach={() => void handleAttach()}
             preventSearchNavigation
           />
         </div>
@@ -2056,6 +2138,15 @@ const ReceiptPage: React.FC = () => {
             setIsPrint(false);
             setPrintData(null);
           }}
+        />
+      )}
+      {showAttach && (
+        <AttachPopup
+          headerName="Attach - Receipt"
+          attachments={attachments}
+          loadAttachmentFile={loadAttachmentFile}
+          onSave={handleAttachSave}
+          onClose={() => setShowAttach(false)}
         />
       )}
       {dialog}

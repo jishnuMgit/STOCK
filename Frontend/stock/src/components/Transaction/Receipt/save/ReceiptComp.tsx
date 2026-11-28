@@ -16,6 +16,7 @@ import { GetStrDocType } from "../../../../utils/receiptHelpers";
 
 import { Link } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
+import { X } from "lucide-react";
 
 import Select, {
   components,
@@ -39,6 +40,7 @@ import {
 
 import "./commanReceipt.css";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 dayjs.extend(customParseFormat);
 
 /* =========================================================
@@ -1389,6 +1391,7 @@ interface ReceiptRowProps {
   onTableEscape: () => void;
 
   onClearRow: (id: number) => void;
+  onDeleteRow: (id: number, index: number) => void;
   onRowSelect?: (id: number, row: ReceiptRow) => void;
 }
 
@@ -1438,6 +1441,7 @@ const ReceiptRow = memo(
     onFieldEnter,
     onTableEscape,
     onClearRow,
+    onDeleteRow,
     onRowSelect,
   }: ReceiptRowProps) => {
     const accountIdMenuOpenRef = useRef(false);
@@ -2151,6 +2155,33 @@ const ReceiptRow = memo(
             <FaEye size={12} />
           </button>
         </td>
+
+        <td className="receipt-cell text-center">
+          {Boolean(
+            row.accountId ||
+              row.accountName ||
+              row.DivID ||
+              row.CCID ||
+              row.txtDebitCredit ||
+              row.amount ||
+              row.description ||
+              row.match,
+          ) && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-label={`Delete receipt line ${index + 1}`}
+              title="Delete line"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDeleteRow(row.id, index);
+              }}
+              className="inline-flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-sm text-slate-500 hover:bg-red-100 hover:text-red-600"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </td>
       </tr>
     );
   },
@@ -2178,6 +2209,8 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
     },
     ref,
   ) => {
+    const { confirm, dialog } = useConfirmModal();
+
     const [selectedRowId, setSelectedRowIdState] = useState<number | null>(
       null,
     );
@@ -2364,72 +2397,97 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
       [focusField],
     );
 
+    const handleDeleteRow = useCallback(
+      async (id: number, index: number) => {
+        const ok = await confirm({
+          title: "Receipt",
+          message: `Do you want to delete Line ${index + 1} ?`,
+        });
+        if (!ok) return;
+
+        const focusIndex = Math.max(0, Math.min(index, rows.length - 2));
+        onClearRow(id);
+        setSelectedRowIdState(focusIndex + 1);
+        requestAnimationFrame(() => focusField(focusIndex, "accountId"));
+      },
+      [confirm, focusField, onClearRow, rows.length],
+    );
+
     return (
-      <div className="receipt-table-wrapper">
-        <table id="tblReceipt" className="receipt-table">
-          <colgroup>
-            <col style={{ width: "38px" }} />
-            <col style={{ width: "105px" }} />
-            <col style={{ width: "auto" }} />
-            <col style={{ width: "75px" }} />
-            <col style={{ width: "75px" }} />
-            <col style={{ width: "100px" }} />
-            <col style={{ width: "60px" }} />
-            <col style={{ width: "60px" }} />
-          </colgroup>
+      <>
+        <div className="receipt-table-wrapper">
+          <table id="tblReceipt" className="receipt-table">
+            <colgroup>
+              <col style={{ width: "38px" }} />
+              <col style={{ width: "105px" }} />
+              <col style={{ width: "auto" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "60px" }} />
+              <col style={{ width: "60px" }} />
+              <col style={{ width: "28px" }} />
+            </colgroup>
 
-          <thead>
-            <tr>
-              <th id="txtSlNo">Line</th>
+            <thead>
+              <tr>
+                <th id="txtSlNo">Line</th>
 
-              <th id="lkpAccountID">
-                <button type="button" onClick={() => handleSort("accountId")}>
-                  Account ID
-                </button>
-              </th>
+                <th id="lkpAccountID">
+                  <button type="button" onClick={() => handleSort("accountId")}>
+                    Account ID
+                  </button>
+                </th>
 
-              <th id="lkpAccountName">
-                <button type="button" onClick={() => handleSort("accountName")}>
-                  Account Name
-                </button>
-              </th>
+                <th id="lkpAccountName">
+                  <button
+                    type="button"
+                    onClick={() => handleSort("accountName")}
+                  >
+                    Account Name
+                  </button>
+                </th>
 
-              <th id="lkpDivID">Div. ID</th>
-              <th id="lkpCCID">CC. ID</th>
-              <th id="txtDebitCredit" className="text-right">
-                Credit Amt.
-              </th>
-              <th id="ckhMatch" className="text-center">
-                Match
-              </th>
-              <th id="btnView" className="text-center">
-                View
-              </th>
-            </tr>
-          </thead>
+                <th id="lkpDivID">Div. ID</th>
+                <th id="lkpCCID">CC. ID</th>
+                <th id="txtDebitCredit" className="text-right">
+                  Credit Amt.
+                </th>
+                <th id="ckhMatch" className="text-center">
+                  Match
+                </th>
+                <th id="btnView" className="text-center">
+                  View
+                </th>
+                <th id="btnDelete" aria-label="Delete line" />
+              </tr>
+            </thead>
 
-          <tbody>
-            {rows.map((row, index) => (
-              <ReceiptRow
-                key={row.id}
-                url=""
-                row={row}
-                index={index}
-                isSelected={selectedRowId === row.id}
-                realAccountOptions={realAccountOptions}
-                accountIdOptions={accountIdOptions}
-                ccIdOptions={ccIdOptions}
-                setSelectedRowId={setSelectedRowId}
-                setRowRef={setRowRef}
-                handleRowChange={handleRowChange}
-                onFieldEnter={onFieldEnter}
-                onTableEscape={onTableEscape}
-                onClearRow={onClearRow}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+            <tbody>
+              {rows.map((row, index) => (
+                <ReceiptRow
+                  key={row.id}
+                  url=""
+                  row={row}
+                  index={index}
+                  isSelected={selectedRowId === row.id}
+                  realAccountOptions={realAccountOptions}
+                  accountIdOptions={accountIdOptions}
+                  ccIdOptions={ccIdOptions}
+                  setSelectedRowId={setSelectedRowId}
+                  setRowRef={setRowRef}
+                  handleRowChange={handleRowChange}
+                  onFieldEnter={onFieldEnter}
+                  onTableEscape={onTableEscape}
+                  onClearRow={onClearRow}
+                  onDeleteRow={handleDeleteRow}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {dialog}
+      </>
     );
   },
 );

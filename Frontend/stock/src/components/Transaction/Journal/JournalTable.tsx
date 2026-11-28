@@ -10,6 +10,7 @@ import React, {
 } from "react";
 
 import { FaEye } from "react-icons/fa";
+import { X } from "lucide-react";
 
 import Select, {
   components,
@@ -26,6 +27,7 @@ import {
 } from "../Receipt/save/ReactSelectStyles";
 
 import "../Receipt/save/commanReceipt.css";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
 /* =========================================================
    TYPES
@@ -102,6 +104,8 @@ interface JournalTableProps {
   onFieldEnter: (rowIndex: number, field: TableField) => void;
 
   onTableEscape: () => void;
+
+  onRowDelete: (id: number) => void;
 
   /* called when focus enters a row (loads that row's description) */
   onRowFocus?: (rowIndex: number) => void;
@@ -273,6 +277,7 @@ interface JournalRowProps {
     field: keyof JournalRow,
     value: string | boolean
   ) => void;
+  onDeleteRow: (id: number, index: number) => void;
   onFieldEnter: (rowIndex: number, field: TableField) => void;
   onTableEscape: () => void;
   onRowFocus?: (rowIndex: number) => void;
@@ -289,6 +294,7 @@ const JournalRow = memo(
     setSelectedRowId,
     setRowRef,
     handleRowChange,
+    onDeleteRow,
     onFieldEnter,
     onTableEscape,
     onRowFocus,
@@ -814,6 +820,33 @@ const JournalRow = memo(
             <FaEye size={12} />
           </button>
         </td>
+
+        <td className="receipt-cell text-center">
+          {Boolean(
+            row.accountId ||
+              row.accountName ||
+              row.division ||
+              row.ccId ||
+              row.debitAmount ||
+              row.creditAmount ||
+              row.match ||
+              row.description,
+          ) && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-label={`Delete journal line ${index + 1}`}
+              title="Delete line"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDeleteRow(row.id, index);
+              }}
+              className="inline-flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-sm text-slate-500 hover:bg-red-100 hover:text-red-600"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </td>
       </tr>
     );
   }
@@ -830,6 +863,7 @@ const JournalTable = forwardRef<JournalTableRef, JournalTableProps>(
     {
       rows,
       handleRowChange,
+      onRowDelete,
       onFieldEnter,
       onTableEscape,
       onRowFocus,
@@ -839,6 +873,8 @@ const JournalTable = forwardRef<JournalTableRef, JournalTableProps>(
     },
     ref
   ) => {
+    const { confirm, dialog } = useConfirmModal();
+
     const [selectedRowId, setSelectedRowIdState] = useState<number | null>(
       null
     );
@@ -932,72 +968,94 @@ const JournalTable = forwardRef<JournalTableRef, JournalTableProps>(
       [focusField]
     );
 
+    const handleDeleteRow = useCallback(
+      async (id: number, index: number) => {
+        const ok = await confirm({
+          title: "Journal",
+          message: `Do you want to delete Line ${index + 1} ?`,
+        });
+        if (!ok) return;
+
+        const focusIndex = Math.max(0, Math.min(index, rows.length - 2));
+        onRowDelete(id);
+        setSelectedRowIdState(focusIndex + 1);
+        requestAnimationFrame(() => focusField(focusIndex, "accountId"));
+      },
+      [confirm, focusField, onRowDelete, rows.length]
+    );
+
     return (
-      <div className="receipt-table-wrapper">
-        <table className="receipt-table">
-          <colgroup>
-            <col style={{ width: "38px" }} />
-            <col style={{ width: "105px" }} />
-            <col style={{ width: "auto" }} />
-            <col style={{ width: "75px" }} />
-            <col style={{ width: "75px" }} />
-            <col style={{ width: "100px" }} />
-            <col style={{ width: "100px" }} />
-            <col style={{ width: "60px" }} />
-            <col style={{ width: "60px" }} />
-          </colgroup>
+      <>
+        <div className="receipt-table-wrapper">
+          <table className="receipt-table">
+            <colgroup>
+              <col style={{ width: "38px" }} />
+              <col style={{ width: "105px" }} />
+              <col style={{ width: "auto" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "60px" }} />
+              <col style={{ width: "60px" }} />
+              <col style={{ width: "28px" }} />
+            </colgroup>
 
-          <thead>
-            <tr>
-              <th className="text-right">Sl.</th>
+            <thead>
+              <tr>
+                <th className="text-right">Sl.</th>
 
-              <th>Account ID</th>
+                <th>Account ID</th>
 
-              <th>Account Name</th>
+                <th>Account Name</th>
 
-              <th id="lkpDivID">Div.ID</th>
+                <th id="lkpDivID">Div.ID</th>
 
-              <th id="lkpCCID">CC. ID</th>
+                <th id="lkpCCID">CC. ID</th>
 
-              <th id="txtDebitAmount" className="text-right">
-                Debit Amt.
-              </th>
+                <th id="txtDebitAmount" className="text-right">
+                  Debit Amt.
+                </th>
 
-              <th id="txtCreditAmt" className="text-right">
-                Credit Amt.
-              </th>
+                <th id="txtCreditAmt" className="text-right">
+                  Credit Amt.
+                </th>
 
-              <th id="chkMatch" className="text-center">
-                Match
-              </th>
+                <th id="chkMatch" className="text-center">
+                  Match
+                </th>
 
-              <th id="Viewbtn" className="text-center">
-                View
-              </th>
-            </tr>
-          </thead>
+                <th id="Viewbtn" className="text-center">
+                  View
+                </th>
+                <th aria-label="Delete line" />
+              </tr>
+            </thead>
 
-          <tbody>
-            {rows.map((row, index) => (
-              <JournalRow
-                key={row.id}
-                row={row}
-                index={index}
-                isSelected={selectedRowId === row.id}
-                realAccountOptions={realAccountOptions}
-                ccIdOptions={ccIdOptions}
-                fetchDivisions={fetchDivisions}
-                setSelectedRowId={setSelectedRowId}
-                setRowRef={setRowRef}
-                handleRowChange={handleRowChange}
-                onFieldEnter={onFieldEnter}
-                onTableEscape={onTableEscape}
-                onRowFocus={onRowFocus}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+            <tbody>
+              {rows.map((row, index) => (
+                <JournalRow
+                  key={row.id}
+                  row={row}
+                  index={index}
+                  isSelected={selectedRowId === row.id}
+                  realAccountOptions={realAccountOptions}
+                  ccIdOptions={ccIdOptions}
+                  fetchDivisions={fetchDivisions}
+                  setSelectedRowId={setSelectedRowId}
+                  setRowRef={setRowRef}
+                  handleRowChange={handleRowChange}
+                  onDeleteRow={handleDeleteRow}
+                  onFieldEnter={onFieldEnter}
+                  onTableEscape={onTableEscape}
+                  onRowFocus={onRowFocus}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {dialog}
+      </>
     );
   }
 );

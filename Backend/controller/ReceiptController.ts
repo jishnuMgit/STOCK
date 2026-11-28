@@ -686,7 +686,183 @@ export const getReceiptExcel = async (
   }
 };
 
+/* =========================================================
+   ATTACHMENTS
+========================================================= */
 
+const mimeOf = (ext: string | null): string =>
+  (
+    ({
+      pdf: "application/pdf",
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      txt: "text/plain",
+      csv: "text/csv",
+      xlsx:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }) as Record<string, string>
+  )[(ext ?? "").toLowerCase()] ?? "application/octet-stream";
+
+const asText = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
+
+/* LIST (no file bytes) */
+export const getAttachments = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const lkpBranch = asText(req.query.lkpBranch);
+    const lkpType = GetStrDocType(asText(req.query.lkpType));
+    const txtDocNo = asText(req.query.txtDocNo);
+
+    if (!lkpBranch || !lkpType || !txtDocNo) {
+      return res.status(400).json({
+        success: false,
+        message: "Branch, receipt type and receipt number are required",
+      });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT fslno, fnote, fdoxname, fdoxtype
+         FROM dbo.tblfinattach
+        WHERE fbrid = $1 AND fdoctype = $2 AND fdocno = $3
+        ORDER BY fslno`,
+      [lkpBranch, lkpType, txtDocNo],
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: rows.map((r) => ({
+        slNo: r.fslno,
+        note: r.fnote,
+        fileName: r.fdoxname,
+        fileType: r.fdoxtype,
+        mimeType: mimeOf(r.fdoxtype),
+        dox: null,
+      })),
+    });
+  } catch (error: unknown) {
+    console.error("getAttachments error:", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to load attachments",
+    });
+  }
+};
+
+/* FILE (for preview) */
+export const getAttachmentFile = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const lkpBranch = asText(req.query.lkpBranch);
+    const lkpType = GetStrDocType(asText(req.query.lkpType));
+    const txtDocNo = asText(req.query.txtDocNo);
+    const slNo = Number(req.query.slNo);
+
+    const { rows } = await pool.query(
+      `SELECT fdox, fdoxtype FROM dbo.tblfinattach
+        WHERE fbrid = $1 AND fdoctype = $2 AND fdocno = $3 AND fslno = $4`,
+      [lkpBranch, lkpType, txtDocNo, slNo],
+    );
+
+    if (!rows[0]?.fdox) {
+      return res
+        .status(404)
+        .json({ success: false, message: "File not found" });
+    }
+
+    res.setHeader("Content-Type", mimeOf(rows[0].fdoxtype));
+    return res.status(200).send(rows[0].fdox);
+  } catch (error: unknown) {
+    console.error("getAttachmentFile error:", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to load the file",
+    });
+  }
+};
+
+/* SAVE (added / modified rows only) */
+export const saveAttachments = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const client = await pool.connect();
+
+  try {
+    const lkpBranch = asText(req.body.lkpBranch);
+    const lkpType = GetStrDocType(asText(req.body.lkpType));
+    const txtDocNo = asText(req.body.txtDocNo);
+    const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+
+    if (!lkpBranch || !lkpType || !txtDocNo) {
+      return res.status(400).json({
+        success: false,
+        message: "Branch, receipt type and receipt number are required",
+      });
+    }
+
+    const key = [lkpBranch, lkpType, txtDocNo];
+
+    await client.query("BEGIN");
+
+    for (const r of rows) {
+      // file removed and no note -> delete the line
+      if (!r.fileName && !r.note) {
+        if (r.originalSlNo) {
+          await client.query(
+            `DELETE FROM dbo.tblfinattach
+              WHERE fbrid=$1 AND fdoctype=$2 AND fdocno=$3 AND fslno=$4`,
+            [...key, r.originalSlNo],
+          );
+        }
+        continue;
+      }
+
+      const bytes = r.dox ? Buffer.from(r.dox, "base64") : null;
+
+      if (r.originalSlNo) {
+        // existing line: keep the old bytes unless a new file was sent
+        await client.query(
+          `UPDATE dbo.tblfinattach
+              SET fnote=$5, fdoxname=$6, fdoxtype=$7, fdox=COALESCE($8, fdox)
+            WHERE fbrid=$1 AND fdoctype=$2 AND fdocno=$3 AND fslno=$4`,
+          [...key, r.originalSlNo, r.note, r.fileName, r.fileType, bytes],
+        );
+      } else {
+        await client.query(
+          `INSERT INTO dbo.tblfinattach
+             (fbrid, fdoctype, fdocno, fslno, fnote, fdoxname, fdoxtype, fdox)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [...key, r.slNo, r.note, r.fileName, r.fileType, bytes],
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Attachments saved successfully" });
+  } catch (error: unknown) {
+    await client.query("ROLLBACK");
+    console.error("saveAttachments error:", error);
+    return res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Attachments could not be saved",
+    });
+  } finally {
+    client.release();
+  }
+};
 
 export const applyReceiptPost = async (
   req: Request,

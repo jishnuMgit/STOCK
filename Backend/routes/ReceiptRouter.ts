@@ -13,6 +13,9 @@ import {
   getReceiptPrint,
   getReceiptExcel,
   applyReceiptPost,
+  getAttachments,
+  getAttachmentFile,
+  saveAttachments,
 } from "../controller/ReceiptController.js";
 
 import { requireReceiptContext } from "../middleware/receiptContext.js";
@@ -20,20 +23,16 @@ import { requireReceiptContext } from "../middleware/receiptContext.js";
 const router = express.Router();
 
 router.use(requireReceiptContext);
-
 router.get("/getReceipt", getReceipt);
-
 router.post("/getReceiptType", getReceiptType);
-
 router.post("/getDocNo", getDocNo);
-
 router.post("/getDivID", getDivID);
-
 router.post("/saveReceipt", saveReceipt);
-
 router.post("/modifyReceipt", modifyReceipt);
 
-// router.get("/saveReceipt", testget);
+router.get("/attachments", getAttachments);
+router.get("/attachments/file", getAttachmentFile);
+router.post("/attachments/save", saveAttachments);
 
 router.post("/get/data", GetDatas);
 
