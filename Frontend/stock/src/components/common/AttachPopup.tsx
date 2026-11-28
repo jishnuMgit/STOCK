@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MdAttachFile, MdClose, MdVisibility } from "react-icons/md";
 import { toast } from "react-toastify";
-import Header from "./Header";
 import ActionButton from "./ActionButton";
+import CloseButton from "./CloseButton";
+import { useNavigate } from "react-router-dom";
 
 // ============================================================
 // TYPES (generic - map your API types to these in the caller)
@@ -205,6 +206,8 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pickingKeyRef = useRef<number | null>(null);
     const urlsRef = useRef<Set<string>>(new Set());
+
+    const navigate = useNavigate();
 
     // Release every object URL when the popup unmounts.
     useEffect(() => {
@@ -466,7 +469,15 @@ const AttachPopup: React.FC<AttachPopupProps> = ({
     return (
         <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 p-4">
             <div className="max-h-full w-262 max-w-full overflow-auto border border-gray-400 bg-white shadow-xl">
-                <Header Name={headerName} />
+                <header className="flex h-9 items-center border-b border-slate-300 bg-[#78d4a4] pr-2">
+                    <h1 className="ml-[10px] text-[17px] font-semibold">
+                        {headerName}
+                    </h1>
+
+                    <div className="ml-auto">
+                        <CloseButton onClose={() => navigate("/")} />
+                    </div>
+                </header>
 
                 <section className="px-3.5 pb-3 pt-3">
                     <input

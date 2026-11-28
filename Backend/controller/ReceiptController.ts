@@ -714,6 +714,8 @@ export const getAttachments = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    const { pstrCoID, pstrYear } = getCtx(res);
+
     const lkpBranch = asText(req.query.lkpBranch);
     const lkpType = GetStrDocType(asText(req.query.lkpType));
     const txtDocNo = asText(req.query.txtDocNo);
@@ -726,21 +728,22 @@ export const getAttachments = async (
     }
 
     const { rows } = await pool.query(
-      `SELECT fslno, fnote, fdoxname, fdoxtype
-         FROM dbo.tblfinattach
-        WHERE fbrid = $1 AND fdoctype = $2 AND fdocno = $3
-        ORDER BY fslno`,
-      [lkpBranch, lkpType, txtDocNo],
+      `SELECT "fSlNo", "fNote", "fDoxName", "fDoxType"
+         FROM dbo.tblfindocumentattach
+        WHERE "fCoID" = $1 AND "fYear" = $2 AND "fBrID" = $3
+          AND "fDocType" = $4 AND "fDocNo" = $5
+        ORDER BY "fSlNo"`,
+      [pstrCoID, Number(pstrYear), lkpBranch, lkpType, txtDocNo],
     );
 
     return res.status(200).json({
       success: true,
       data: rows.map((r) => ({
-        slNo: r.fslno,
-        note: r.fnote,
-        fileName: r.fdoxname,
-        fileType: r.fdoxtype,
-        mimeType: mimeOf(r.fdoxtype),
+        slNo: r.fSlNo,
+        note: r.fNote,
+        fileName: r.fDoxName,
+        fileType: r.fDoxType,
+        mimeType: mimeOf(r.fDoxType),
         dox: null,
       })),
     });
@@ -760,25 +763,29 @@ export const getAttachmentFile = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    const { pstrCoID, pstrYear } = getCtx(res);
+
     const lkpBranch = asText(req.query.lkpBranch);
     const lkpType = GetStrDocType(asText(req.query.lkpType));
     const txtDocNo = asText(req.query.txtDocNo);
     const slNo = Number(req.query.slNo);
 
     const { rows } = await pool.query(
-      `SELECT fdox, fdoxtype FROM dbo.tblfinattach
-        WHERE fbrid = $1 AND fdoctype = $2 AND fdocno = $3 AND fslno = $4`,
-      [lkpBranch, lkpType, txtDocNo, slNo],
+      `SELECT "fDox", "fDoxType"
+         FROM dbo.tblfindocumentattach
+        WHERE "fCoID" = $1 AND "fYear" = $2 AND "fBrID" = $3
+          AND "fDocType" = $4 AND "fDocNo" = $5 AND "fSlNo" = $6`,
+      [pstrCoID, Number(pstrYear), lkpBranch, lkpType, txtDocNo, slNo],
     );
 
-    if (!rows[0]?.fdox) {
+    if (!rows[0]?.fDox) {
       return res
         .status(404)
         .json({ success: false, message: "File not found" });
     }
 
-    res.setHeader("Content-Type", mimeOf(rows[0].fdoxtype));
-    return res.status(200).send(rows[0].fdox);
+    res.setHeader("Content-Type", mimeOf(rows[0].fDoxType));
+    return res.status(200).send(rows[0].fDox);
   } catch (error: unknown) {
     console.error("getAttachmentFile error:", error);
     return res.status(500).json({
@@ -797,6 +804,8 @@ export const saveAttachments = async (
   const client = await pool.connect();
 
   try {
+    const { pstrCoID, pstrYear, pstrUserID } = getCtx(res);
+
     const lkpBranch = asText(req.body.lkpBranch);
     const lkpType = GetStrDocType(asText(req.body.lkpType));
     const txtDocNo = asText(req.body.txtDocNo);
@@ -809,17 +818,29 @@ export const saveAttachments = async (
       });
     }
 
-    const key = [lkpBranch, lkpType, txtDocNo];
+    const key = [pstrCoID, Number(pstrYear), lkpBranch, lkpType, txtDocNo];
 
     await client.query("BEGIN");
 
     for (const r of rows) {
-      // file removed and no note -> delete the line
-      if (!r.fileName && !r.note) {
+      const note = r.note ? String(r.note).trim() : null;
+      const fileName = r.fileName ? String(r.fileName).trim() : null;
+      const fileType = r.fileType ? String(r.fileType).trim() : null;
+
+      if (note && note.length > 100)
+        throw new Error("Note cannot exceed 100 characters.");
+      if (fileName && fileName.length > 100)
+        throw new Error(`File name is too long (max 100): ${fileName}`);
+      if (fileType && fileType.length > 5)
+        throw new Error(`File type is too long (max 5): ${fileType}`);
+
+      // no file and no note -> delete the line (SP mode D1)
+      if (!fileName && !note) {
         if (r.originalSlNo) {
           await client.query(
-            `DELETE FROM dbo.tblfinattach
-              WHERE fbrid=$1 AND fdoctype=$2 AND fdocno=$3 AND fslno=$4`,
+            `DELETE FROM dbo.tblfindocumentattach
+              WHERE "fCoID"=$1 AND "fYear"=$2 AND "fBrID"=$3
+                AND "fDocType"=$4 AND "fDocNo"=$5 AND "fSlNo"=$6`,
             [...key, r.originalSlNo],
           );
         }
@@ -829,19 +850,28 @@ export const saveAttachments = async (
       const bytes = r.dox ? Buffer.from(r.dox, "base64") : null;
 
       if (r.originalSlNo) {
-        // existing line: keep the old bytes unless a new file was sent
+        // existing line (SP mode M1): keep old bytes unless a new file was sent
         await client.query(
-          `UPDATE dbo.tblfinattach
-              SET fnote=$5, fdoxname=$6, fdoxtype=$7, fdox=COALESCE($8, fdox)
-            WHERE fbrid=$1 AND fdoctype=$2 AND fdocno=$3 AND fslno=$4`,
-          [...key, r.originalSlNo, r.note, r.fileName, r.fileType, bytes],
+          `UPDATE dbo.tblfindocumentattach
+              SET "fNote"      = $7::varchar,
+                  "fDoxName"   = $8::varchar,
+                  "fDoxType"   = $9::varchar,
+                  "fDox"       = CASE WHEN $8::varchar IS NULL THEN NULL
+                                      ELSE COALESCE($10::bytea, "fDox") END,
+                  "fMUserID"   = $11,
+                  "fMUserDate" = now()
+            WHERE "fCoID"=$1 AND "fYear"=$2 AND "fBrID"=$3
+              AND "fDocType"=$4 AND "fDocNo"=$5 AND "fSlNo"=$6`,
+          [...key, r.originalSlNo, note, fileName, fileType, bytes, pstrUserID],
         );
       } else {
+        // new line (SP mode S)
         await client.query(
-          `INSERT INTO dbo.tblfinattach
-             (fbrid, fdoctype, fdocno, fslno, fnote, fdoxname, fdoxtype, fdox)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [...key, r.slNo, r.note, r.fileName, r.fileType, bytes],
+          `INSERT INTO dbo.tblfindocumentattach
+             ("fCoID","fYear","fBrID","fDocType","fDocNo","fSlNo",
+              "fNote","fDoxName","fDox","fDoxType","fSUserID","fSUserDate")
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())`,
+          [...key, r.slNo, note, fileName, bytes, fileType, pstrUserID],
         );
       }
     }
@@ -857,7 +887,9 @@ export const saveAttachments = async (
     return res.status(400).json({
       success: false,
       message:
-        error instanceof Error ? error.message : "Attachments could not be saved",
+        error instanceof Error
+          ? error.message
+          : "Attachments could not be saved",
     });
   } finally {
     client.release();
