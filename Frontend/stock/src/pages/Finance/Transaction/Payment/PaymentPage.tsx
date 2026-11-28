@@ -30,6 +30,9 @@ import {
   type AccountData,
 } from "../../../../types/receiptypes";
 
+import AttachPopup from "../../../../components/common/AttachPopup";
+import { useDocAttachments } from "../../../../hooks/useDocAttachments";
+
 /*
  * TODO (Payment Print / Excel):
  * The backend has no /Payment/print or /Payment/excel yet.
@@ -224,6 +227,8 @@ const PaymentPage: React.FC = () => {
 
   const [focusPaymentNoAfterClear, setFocusPaymentNoAfterClear] = useState(0);
   const [dtpDate, setDtpDate] = useState(getTodayDate);
+  const [showAttach, setShowAttach] = useState(false);
+  const docAttach = useDocAttachments("/Payment");
 
   /* =======================================================
      NOTE
@@ -387,6 +392,23 @@ const PaymentPage: React.FC = () => {
   const handlePrint = useCallback(() => {
     notify.info("Print is not available for Payment yet.");
   }, []);
+
+  const handleAttach = useCallback(async () => {
+    if (!lkpBranch || !lkpType || !txtDocNo.trim()) {
+      notify.warning("Branch, type, and payment number are required.");
+      return;
+    }
+    if (!isModifyMode) {
+      notify.warning("Save the payment before attaching documents.");
+      return;
+    }
+    try {
+      await docAttach.load(lkpBranch, getPaymentStrDocType(lkpType), txtDocNo.trim());
+      setShowAttach(true);
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : "Unable to load attachments.");
+    }
+  }, [lkpBranch, lkpType, txtDocNo, isModifyMode, docAttach]);
 
   /* =======================================================
      LOAD PAYMENT FOR MODIFY
@@ -1780,6 +1802,7 @@ const PaymentPage: React.FC = () => {
             ref={actionsRef}
             clearForm={clearForm}
             onPrint={handlePrint}
+            onAttach={handleAttach}
             onPost={() => void handlePost()}
             onSave={isModifyMode ? handleModify : handleSave}
             onDelete={handledelete}
@@ -1792,6 +1815,15 @@ const PaymentPage: React.FC = () => {
 
       {/* TODO: Payment print preview goes here once the backend exists. */}
       {dialog}
+      {showAttach && (
+        <AttachPopup
+          headerName="Payment Attach"
+          attachments={docAttach.attachments}
+          loadAttachmentFile={docAttach.loadFile(lkpBranch, getPaymentStrDocType(lkpType), txtDocNo.trim())}
+          onSave={docAttach.save(lkpBranch, getPaymentStrDocType(lkpType), txtDocNo.trim())}
+          onClose={() => setShowAttach(false)}
+        />
+      )}
       {messageDialog}
     </div>
   );

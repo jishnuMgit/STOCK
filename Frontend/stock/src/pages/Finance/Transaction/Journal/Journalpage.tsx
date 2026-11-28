@@ -22,14 +22,19 @@ import JournalActions, {
   type JournalActionsRef,
 } from "../../../../components/Transaction/Journal/JournalActions";
 
-// TODO: adjust the path to where useJournal.ts is placed
+import AttachPopup from "../../../../components/common/AttachPopup";
+import { useDocAttachments } from "../../../../hooks/useDocAttachments";
 import {
   useJournal,
+  JOURNAL_DOC_TYPE,
+  JOURNAL_ATTACH_BASE,
   type Branch,
   type JournalType,
 } from "../../../../hooks/useJournal";
+
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import { useMessageModal } from "../../../../hooks/useMessageModal";
+
 
 /* =========================================================
    HELPERS
@@ -131,6 +136,9 @@ const JournalPage: React.FC = () => {
 
   /* true when the loaded journal is already posted */
   const [isPosted, setIsPosted] = useState(false);
+
+  const [showAttach, setShowAttach] = useState(false);
+  const docAttach = useDocAttachments(JOURNAL_ATTACH_BASE);
 
   /* journal number loading + manual refresh (after save / clear) */
   const [journalNoLoading, setJournalNoLoading] = useState(false);
@@ -786,6 +794,27 @@ const JournalPage: React.FC = () => {
     clearForm,
   ]);
 
+  const handleAttach = useCallback(async () => {
+    if (!branch || !journalNo.trim()) {
+      notify.error("Please input 'Journal No.'");
+      return;
+    }
+
+    if (!isExisting) {
+      notify.error("Save the journal before attaching documents.");
+      return;
+    }
+
+    try {
+      await docAttach.load(branch, JOURNAL_DOC_TYPE, journalNo.trim());
+      setShowAttach(true);
+    } catch (error: unknown) {
+      notify.error(
+        error instanceof Error ? error.message : "Unable to load attachments.",
+      );
+    }
+  }, [branch, journalNo, isExisting, docAttach]);
+
   /* =======================================================
      RETURN
   ======================================================= */
@@ -884,12 +913,22 @@ const JournalPage: React.FC = () => {
             onSave={handleSave}
             onDelete={handleDelete}
             onPost={handlePost}
+            onAttach={handleAttach}
             isPosted={isPosted}
             saveLabel={isExisting ? "Modify" : "Save"}
           />
         </div>
       </div>
       {confirmDialog}
+      {showAttach && (
+        <AttachPopup
+          headerName="Journal Attach"
+          attachments={docAttach.attachments}
+          loadAttachmentFile={docAttach.loadFile(branch, JOURNAL_DOC_TYPE, journalNo.trim())}
+          onSave={docAttach.save(branch, JOURNAL_DOC_TYPE, journalNo.trim())}
+          onClose={() => setShowAttach(false)}
+        />
+      )}
       {messageDialog}
     </div>
   );
