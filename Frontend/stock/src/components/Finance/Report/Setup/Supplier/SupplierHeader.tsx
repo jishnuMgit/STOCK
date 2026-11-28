@@ -154,7 +154,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
 
             <div className=" border-b border-slate-200 px-3 py-3 sm:px-5 lg:px-6">
                 <div
-                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_80px_150px_minmax(0,1fr)]
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_80px_80px_minmax(0,1fr)]
       lg:items-end lg:gap-4"
                 >
                     {/* NEW SUPPLIER ID */}
@@ -264,7 +264,7 @@ const SupplierHeader: React.FC<SupplierHeaderProps> = ({
 
                     {/* BUSINESS TYPE */}
 
-                    <div className="relative -left-3.25 w-[50%]">
+                    <div className="relative w-full">
                         <label
                             htmlFor="lkpBusinessType"
                             className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
