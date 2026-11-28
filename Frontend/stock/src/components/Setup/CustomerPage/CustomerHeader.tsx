@@ -136,7 +136,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           TITLE
       ====================================================== */}
 
-      <div className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-slate-300 bg-[#a3dfc0] pr-1">
+      <div className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-slate-300 bg-[#78d4a4] pr-1">
         <h1 className="ml-[10px] text-[17px] font-semibold text-slate-700">
           Customer
         </h1>
@@ -249,7 +249,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
               HAVE DIVISION
               ================================================== */}
 
-          <div className="relative -left-1.25 w-full">
+          <div className="relative w-full">
             <label
               htmlFor="lkpHaveDivision"
               className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
@@ -296,7 +296,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           {/* ==================================================
         PARENT ACCOUNT
     ================================================== */}
-          <div className="grid grid-cols-[30%_minmax(0,1fr)] items-end gap-2.5 sm:col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-[24%_minmax(0,1fr)] items-end gap-1 sm:col-span-2 lg:col-span-1">
             {/* PARENT ACCOUNT ID */}
 
             <div id="glIdBox" className="w-full">

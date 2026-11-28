@@ -63,7 +63,7 @@ const BranchStockModal: React.FC<BranchStockModalProps> = ({
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Title bar */}
-        <div className="flex h-9 items-center justify-between border-b border-slate-300 bg-[#a3dfc0] pl-3 pr-1">
+        <div className="flex h-9 items-center justify-between border-b border-slate-300 bg-[#78d4a4] pl-3 pr-1">
           <span className="text-[16px] font-semibold text-slate-700">
             Branch Stock Details
           </span>

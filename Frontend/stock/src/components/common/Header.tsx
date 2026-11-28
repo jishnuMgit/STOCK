@@ -6,7 +6,7 @@ const Header = ({ Name }: { Name: string }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
+    <header className="flex h-9 items-center border-b border-slate-300 bg-[#78d4a4] pr-2">
       <h1 className="ml-[10px] text-[17px] font-semibold">
         {Name}
       </h1>

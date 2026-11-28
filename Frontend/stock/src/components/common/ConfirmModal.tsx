@@ -101,7 +101,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         aria-describedby="confirm-modal-message"
         className="w-full max-w-sm overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800 shadow-lg outline-none"
       >
-        <div className="flex h-7.5 items-center border-b border-slate-300 bg-[#a5e0c3] px-3">
+        <div className="flex h-7.5 items-center border-b border-slate-300 bg-[#78d4a4] px-3">
           <h2
             id="confirm-modal-title"
             className="text-[15px] font-semibold text-slate-700"

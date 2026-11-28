@@ -248,7 +248,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   return (
     <>
       {/* TITLE */}
-      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
+      <div className="flex h-9 items-center border-b border-slate-300 bg-[#78d4a4] pr-2">
         <span className="px-3 text-[17px] font-semibold text-slate-700">
           Match
         </span>

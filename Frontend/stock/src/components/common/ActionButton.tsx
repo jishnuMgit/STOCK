@@ -13,7 +13,7 @@ interface ActionButtonProps {
     type?: "button" | "submit";
 }
 
-const textClass = "font-medium text-slate-500";
+const textClass = "font-medium text-green-600";
 
 const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
     (
@@ -52,7 +52,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
                     {hasUnderline ? (
                         <>
                             {label.slice(0, underlineIndex)}
-                            <span className="font-bold text-green-600">
+                            <span className="font-bold text-purple-600">
                                 {label[underlineIndex!]}
                             </span>
                             {label.slice(underlineIndex! + 1)}

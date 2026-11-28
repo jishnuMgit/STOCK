@@ -183,7 +183,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-225 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
+          <header className="flex h-7.5 items-center justify-start bg-[#78d4a4]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
               Item List
             </h1>

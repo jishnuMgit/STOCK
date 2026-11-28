@@ -812,7 +812,7 @@ const SupplierMiddle: React.FC<SupplierMiddleProps> = ({
             <div className="p-3">
                 <div
                     className="mr-[6.2rem] grid grid-cols-[92px_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5
-          lg:grid-cols-[92px_96px_100px_56px_84px_minmax(0,1fr)_50px_240px]"
+          lg:grid-cols-[92px_96px_70px_48px_64px_minmax(0,1fr)_50px_240px]"
                 >
                     {/* ---------- ROW 1 ---------- */}
 
@@ -831,7 +831,7 @@ const SupplierMiddle: React.FC<SupplierMiddleProps> = ({
 
                     <label
                         htmlFor="txtCreditDays"
-                        className="whitespace-nowrap text-[11px] text-slate-600 lg:pl-6"
+                        className="whitespace-nowrap text-[11px] text-slate-600 lg:pl-2"
                     >
                         Credit Days
                     </label>
@@ -848,7 +848,7 @@ const SupplierMiddle: React.FC<SupplierMiddleProps> = ({
 
                     <label
                         htmlFor="txtShortName"
-                        className="whitespace-nowrap text-[11px] text-slate-600 lg:pl-2"
+                        className="whitespace-nowrap text-[11px] text-slate-600"
                     >
                         Short Name
                     </label>
